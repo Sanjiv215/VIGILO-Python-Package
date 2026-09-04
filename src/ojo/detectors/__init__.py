@@ -1,0 +1,1 @@
+"""Detector registry and discovery."""
