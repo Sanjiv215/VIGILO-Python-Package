@@ -31,8 +31,7 @@ class BaseDetector(ABC):
     meta: DetectorMeta
 
     @abstractmethod
-    def run(self, tree: ast.Module, file_path: Path, source: str) -> list[Finding]:
-        ...
+    def run(self, tree: ast.Module, file_path: Path, source: str) -> list[Finding]: ...
 ```
 
 Add a detector: subclass `BaseDetector`, set `meta`, implement `run()`, add to registry.
@@ -59,5 +58,6 @@ Exit: 0 = clean, 1 = findings, 2 = error
 
 ```python
 from ojo import scan, Scanner, ScanConfig, Finding, Severity
+
 findings = scan(".")
 ```
