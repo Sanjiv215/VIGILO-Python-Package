@@ -35,3 +35,9 @@ coverage.xml
 # OS
 .DS_Store
 Thumbs.db
+
+#md files
+DECISIONS.md
+TECH_STACK.md
+TIMELINE.md
+WORKFLOW.md
