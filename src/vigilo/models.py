@@ -75,16 +75,17 @@ class Location:
 class DetectorMeta:
     """Identity, classification, and metadata for a detector."""
 
-    id: str  # e.g., "VIGILO-001"
+    id: str  # e.g., "VIGILO-001" or "VIGILO-C01"
     name: str  # e.g., "SQL Injection"
-    cwe: int  # e.g., 89
+    cwe: int | None  # e.g., 89 or None for correctness
     description: str
     severity: Severity
+    category: str = "security"  # "security" or "correctness"
 
 
 @dataclass(frozen=True)
 class Finding:
-    """A vulnerability finding reported by a detector."""
+    """A vulnerability or correctness finding reported by a detector."""
 
     detector: DetectorMeta
     location: Location
@@ -93,3 +94,4 @@ class Finding:
     severity: Severity
     confidence: str = "high"  # "high", "medium", "low"
     source_line: str = ""
+    category: str = "security"  # "security" or "correctness"

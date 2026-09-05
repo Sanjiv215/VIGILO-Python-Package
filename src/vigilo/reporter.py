@@ -32,10 +32,11 @@ def format_text_report(findings: Sequence[Finding], use_color: bool = True) -> s
     """Format findings as human-readable CLI text output."""
     if not findings:
         prefix = f"{BOLD}{GREEN}✓{RESET} " if use_color else "✓ "
-        return f"\n{prefix}No security vulnerabilities found.\n"
+        return f"\n{prefix}No security vulnerabilities or correctness issues found.\n"
 
     lines: list[str] = [""]
     counts = {"high": 0, "medium": 0, "low": 0}
+    cat_counts = {"security": 0, "correctness": 0}
 
     dim = DIM if use_color else ""
     reset = RESET if use_color else ""
@@ -44,14 +45,19 @@ def format_text_report(findings: Sequence[Finding], use_color: bool = True) -> s
     for finding in findings:
         sev = finding.severity
         counts[sev.value] += 1
+        cat_counts[finding.category] = cat_counts.get(finding.category, 0) + 1
+
         sev_colored = f"{_severity_color(sev, use_color)}{sev.value.upper()}{reset}"
         loc_str = f"{bold}{finding.location}{reset}"
         conf_str = f"{dim}[confidence: {finding.confidence}]{reset}"
         meta = finding.detector
 
+        cwe_tag = f" (CWE-{meta.cwe})" if meta.cwe is not None else ""
+        cat_badge = f"{dim}[{meta.category.upper()}]{reset} " if meta.category != "security" else ""
+
         header = (
             f"  {loc_str}  {sev_colored}  "
-            f"{bold}{meta.id} {meta.name}{reset} (CWE-{meta.cwe}) {conf_str}"
+            f"{cat_badge}{bold}{meta.id} {meta.name}{reset}{cwe_tag} {conf_str}"
         )
         lines.append(header)
 
@@ -69,10 +75,19 @@ def format_text_report(findings: Sequence[Finding], use_color: bool = True) -> s
 
     total = len(findings)
     sum_color = f"{BOLD}{RED}" if use_color else ""
-    summary = (
-        f"  {sum_color}✖ {total} vulnerabilities found{reset} "
-        f"({counts['high']} high, {counts['medium']} medium, {counts['low']} low)\n"
-    )
+    sec = cat_counts.get("security", 0)
+    corr = cat_counts.get("correctness", 0)
+
+    if corr > 0 and sec > 0:
+        counts_str = f"{counts['high']} high, {counts['medium']} medium, {counts['low']} low"
+        breakdown = f"({sec} security, {corr} correctness | {counts_str})"
+    elif corr > 0:
+        breakdown = f"({counts['high']} high, {counts['medium']} medium, {counts['low']} low)"
+    else:
+        breakdown = f"({counts['high']} high, {counts['medium']} medium, {counts['low']} low)"
+
+    label = "issues" if corr > 0 else "vulnerabilities"
+    summary = f"  {sum_color}✖ {total} {label} found{reset} {breakdown}\n"
     lines.append(summary)
 
     return "\n".join(lines)
@@ -87,6 +102,7 @@ def format_json_report(findings: Sequence[Finding]) -> str:
                 "id": f.detector.id,
                 "name": f.detector.name,
                 "cwe": f.detector.cwe,
+                "category": f.category,
                 "severity": f.severity.value,
                 "confidence": f.confidence,
                 "message": f.message,
@@ -104,6 +120,8 @@ def format_json_report(findings: Sequence[Finding]) -> str:
         ],
         "summary": {
             "total": len(findings),
+            "security": sum(1 for f in findings if f.category == "security"),
+            "correctness": sum(1 for f in findings if f.category == "correctness"),
             "high": sum(1 for f in findings if f.severity == Severity.HIGH),
             "medium": sum(1 for f in findings if f.severity == Severity.MEDIUM),
             "low": sum(1 for f in findings if f.severity == Severity.LOW),

@@ -7,7 +7,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from vigilo.detectors import ALL_DETECTORS, BaseDetector
+from vigilo.detectors import ALL_DETECTORS, SECURITY_DETECTORS, BaseDetector
+from vigilo.detectors.syntax_error import SyntaxErrorDetector
 from vigilo.discovery import discover_files
 from vigilo.models import Finding, Severity
 
@@ -21,6 +22,8 @@ class ScanConfig:
     min_severity: Severity = Severity.LOW
     detectors: Sequence[type[BaseDetector]] | None = None
     follow_symlinks: bool = False
+    include_correctness: bool = False
+    categories: Sequence[str] | None = None
 
 
 class Scanner:
@@ -28,15 +31,22 @@ class Scanner:
 
     def __init__(self, config: ScanConfig) -> None:
         self.config = config
-        detector_classes = config.detectors if config.detectors is not None else ALL_DETECTORS
+        if config.detectors is not None:
+            detector_classes = config.detectors
+        elif config.categories is not None:
+            detector_classes = [d for d in ALL_DETECTORS if d.meta.category in config.categories]
+        elif config.include_correctness:
+            detector_classes = ALL_DETECTORS
+        else:
+            detector_classes = SECURITY_DETECTORS
         self.detectors: list[BaseDetector] = [cls() for cls in detector_classes]
 
     @staticmethod
-    def parse_file(file_path: Path) -> tuple[ast.Module | None, str, str | None]:
+    def parse_file(file_path: Path) -> tuple[ast.Module | None, str, SyntaxError | str | None]:
         """Safely read and parse a Python source file into an AST module.
 
         Returns:
-            Tuple of (ast.Module or None, source_code, error_message or None).
+            Tuple of (ast.Module or None, source_code, SyntaxError/error_message or None).
         """
         try:
             source = file_path.read_text(encoding="utf-8")
@@ -52,7 +62,7 @@ class Scanner:
             tree = ast.parse(source, filename=str(file_path))
             return tree, source, None
         except SyntaxError as e:
-            return None, source, f"Syntax error at line {e.lineno}: {e.msg}"
+            return None, source, e
         except Exception as e:
             return None, source, f"Failed to parse AST: {e}"
 
@@ -60,7 +70,10 @@ class Scanner:
         """Scan a single Python file using all configured detectors."""
         tree, source, error = self.parse_file(file_path)
         if tree is None:
-            # If the file couldn't be parsed, skip without crashing
+            if isinstance(error, SyntaxError):
+                for detector in self.detectors:
+                    if isinstance(detector, SyntaxErrorDetector):
+                        return [detector.check_syntax_error(error, file_path, source)]
             return []
 
         findings: list[Finding] = []

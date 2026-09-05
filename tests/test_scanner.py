@@ -59,7 +59,7 @@ class TestScanner(unittest.TestCase):
             tree, source, error = Scanner.parse_file(tmp_path)
             self.assertIsNone(tree)
             self.assertIsNotNone(error)
-            self.assertIn("Syntax error", error or "")
+            self.assertTrue(isinstance(error, SyntaxError) or "Syntax error" in str(error))
         finally:
             tmp_path.unlink()
 

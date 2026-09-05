@@ -25,7 +25,7 @@ class TestCLI(unittest.TestCase):
                 sys.stdout = old_stdout
 
             self.assertEqual(code, 0)
-            self.assertIn("No security vulnerabilities found", out.getvalue())
+            self.assertIn("No security vulnerabilities or correctness issues found", out.getvalue())
 
     def test_cli_vulnerability_exit_code_one(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -85,7 +85,7 @@ class TestCLI(unittest.TestCase):
                 sys.stdout = old_stdout
 
             self.assertEqual(code, 0)
-            self.assertIn('"version": "0.1.1"', stdout_capture.getvalue())
+            self.assertIn('"version": "0.2.0"', stdout_capture.getvalue())
 
     def test_cli_non_existent_path(self) -> None:
         stderr_capture = io.StringIO()

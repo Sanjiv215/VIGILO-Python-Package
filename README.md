@@ -75,6 +75,14 @@ Filter by minimum severity:
 vigilo scan . --min-severity high
 ```
 
+Include code correctness diagnostics (syntax errors, undefined names, unclosed resources):
+
+```bash
+vigilo scan . --correctness
+# or run the dedicated diagnose subcommand:
+vigilo diagnose .
+```
+
 Exclude specific directories or glob patterns:
 
 ```bash
@@ -86,10 +94,16 @@ vigilo scan . --exclude "tests/*" --exclude "migrations/*"
 ```python
 from vigilo import scan
 
+# Security scan (default)
 findings = scan("src/")
 
+# Security + Correctness scan
+all_findings = scan("src/", include_correctness=True)
+
 for finding in findings:
-    print(f"[{finding.severity.upper()}] {finding.detector.id} {finding.detector.name}")
+    print(
+        f"[{finding.severity.upper()}] {finding.detector.id} {finding.detector.name} ({finding.detector.category})"
+    )
     print(f"  Location: {finding.location}")
     print(f"  Fix: {finding.fix_hint}")
 ```
@@ -97,6 +111,8 @@ for finding in findings:
 ---
 
 ## Supported Detectors
+
+### Security Vulnerabilities (Default)
 
 | ID | CWE | Vulnerability | Severity | Target APIs |
 |---|---|---|---|---|
@@ -106,18 +122,34 @@ for finding in findings:
 | **`VIGILO-004`** | CWE-502 | Unsafe Deserialization | `HIGH` | `pickle.loads()`, `yaml.load()`, `marshal.loads()` |
 | **`VIGILO-005`** | CWE-22 | Path Traversal | `HIGH` | `open()`, `os.open()`, `io.open()` |
 
+### Code Correctness Diagnostics (Opt-In with `--correctness` or `diagnose`)
+
+| ID | Issue | Severity | Description |
+|---|---|---|---|
+| **`VIGILO-C01`** | Syntax & Indentation Error | `HIGH` | Python parse failure or bad indentation |
+| **`VIGILO-C02`** | Undefined Name Usage | `MEDIUM` | Use of unbound or misspelled variable/name |
+| **`VIGILO-C03`** | Unused Import / Variable | `LOW` | Unused imported module or assigned local variable |
+| **`VIGILO-C04`** | Unclosed File Resource | `MEDIUM` | Raw `open()` call without context manager (`with`) |
+| **`VIGILO-C05`** | Bare Except Clause | `MEDIUM` | Blanket `except:` catch masking critical errors |
+
 ---
 
 ## CLI Reference
 
 ```
-usage: vigilo [-h] [--version] {scan} ... [target] [--format {text,json}]
-              [--min-severity {low,medium,high}] [--exclude EXCLUDE] [--no-color]
+usage: vigilo [-h] [--version] {scan,diagnose} ... [target] [--format {text,json}]
+              [--min-severity {low,medium,high}] [--exclude EXCLUDE] [--correctness]
+              [--no-color]
+
+Commands:
+  scan                  Scan target directory or file for security vulnerabilities
+  diagnose              Run code correctness diagnostics (syntax, undefined names, resources)
 
 Options:
   target                Directory or file to scan (default: '.')
   --format, -f          Output report format: 'text' or 'json' (default: 'text')
   --min-severity, -s    Minimum severity threshold: 'low', 'medium', 'high' (default: 'low')
+  --correctness, -c     Include code correctness diagnostics alongside security checks
   --exclude, -e         Exclude path matching glob pattern (repeatable)
   --no-color            Disable ANSI terminal coloring
   --version, -V         Show version and exit

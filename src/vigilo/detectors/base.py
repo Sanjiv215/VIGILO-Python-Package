@@ -65,6 +65,7 @@ class BaseDetector(ABC):
             severity=severity or self.meta.severity,
             confidence=confidence,
             source_line=source_line,
+            category=self.meta.category,
         )
 
     @staticmethod

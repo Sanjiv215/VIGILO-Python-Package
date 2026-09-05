@@ -17,7 +17,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Construct the command-line argument parser."""
     parser = argparse.ArgumentParser(
         prog="vigilo",
-        description="Vigilo — A static, security-focused code scanner for Python.",
+        description="Vigilo — A static, security and correctness code scanner for Python.",
     )
     parser.add_argument(
         "--version",
@@ -28,45 +28,64 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
 
+    # 1. `vigilo scan`
     scan_parser = subparsers.add_parser(
         "scan",
         help="Scan a directory or file for security vulnerabilities",
     )
+    _add_common_arguments(scan_parser)
     scan_parser.add_argument(
+        "--correctness",
+        "-c",
+        action="store_true",
+        default=False,
+        help="Include code correctness diagnostics (syntax, undefined names, resource leaks)",
+    )
+
+    # 2. `vigilo diagnose`
+    diagnose_parser = subparsers.add_parser(
+        "diagnose",
+        help="Scan for both security vulnerabilities and code correctness diagnostics",
+    )
+    _add_common_arguments(diagnose_parser)
+
+    return parser
+
+
+def _add_common_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
         "target",
         nargs="?",
         default=".",
         help="Path to directory or file to scan (default: '.')",
     )
-    scan_parser.add_argument(
+    parser.add_argument(
         "--format",
         "-f",
         choices=["text", "json"],
         default="text",
         help="Output report format (default: 'text')",
     )
-    scan_parser.add_argument(
+    parser.add_argument(
         "--min-severity",
         "-s",
         choices=["low", "medium", "high"],
         default="low",
         help="Minimum severity threshold to report (default: 'low')",
     )
-    scan_parser.add_argument(
+    parser.add_argument(
         "--exclude",
         "-e",
         action="append",
         default=[],
         help="Exclude files/directories matching glob pattern (repeatable)",
     )
-    scan_parser.add_argument(
+    parser.add_argument(
         "--no-color",
         action="store_true",
         default=False,
         help="Disable ANSI color codes in output",
     )
-
-    return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -79,7 +98,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     # Normalize alias: `vigilo <path>` -> `vigilo scan <path>`
     if not args_list:
         args_list = ["scan", "."]
-    elif args_list[0] not in ("scan", "-h", "--help", "-V", "--version"):
+    elif args_list[0] not in ("scan", "diagnose", "-h", "--help", "-V", "--version"):
         args_list = ["scan"] + args_list
 
     parser = build_parser()
@@ -89,7 +108,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     except SystemExit as e:
         return int(e.code) if isinstance(e.code, int) else 2
 
-    if getattr(args, "command", None) != "scan":
+    command = getattr(args, "command", None)
+    if command not in ("scan", "diagnose"):
         parser.print_help()
         return 0
 
@@ -103,6 +123,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     min_sev_str = getattr(args, "min_severity", "low")
     excludes = getattr(args, "exclude", [])
     no_color = getattr(args, "no_color", False)
+    include_correctness = command == "diagnose" or getattr(args, "correctness", False)
 
     min_severity = Severity(min_sev_str.lower())
     use_color = not no_color and sys.stdout.isatty() and out_format == "text"
@@ -112,6 +133,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             paths=[target_path],
             min_severity=min_severity,
             exclude_patterns=excludes if excludes else None,
+            include_correctness=include_correctness,
         )
         scanner = Scanner(config)
         findings = scanner.scan()

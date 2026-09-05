@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-09-05
+
+### Added
+- **Code Correctness Diagnostics (Opt-In):**
+  - Added `--correctness` / `-c` flag to `vigilo scan` and dedicated `vigilo diagnose` subcommand.
+  - Default `vigilo scan .` remains strictly security-focused (zero false alarms from style/formatting).
+- **Correctness Detectors:**
+  - `VIGILO-C01`: Syntax & Indentation Error detector (captures parse failures and bad indentation).
+  - `VIGILO-C02`: Undefined Name Usage detector (catches variable/function typos and unbound names).
+  - `VIGILO-C03`: Unused Import / Variable detector (flags dead imports and assigned but unused local variables).
+  - `VIGILO-C04`: Unclosed File Resource detector (identifies raw `open()` calls without `with` context management).
+  - `VIGILO-C05`: Bare `except:` Clause detector (flags blanket exception catching that masks errors).
+- **API & Reporting Enhancements:**
+  - Added `category` field (`"security"` | `"correctness"`) to `DetectorMeta` and `Finding`.
+  - Added `include_correctness` and `categories` parameters to `vigilo.scan()` and `ScanConfig`.
+  - Enhanced text reporter with category headers when multiple categories are scanned.
+
+---
+
 ## [0.1.1] - 2026-09-05
 
 ### Fixed

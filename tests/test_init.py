@@ -7,7 +7,7 @@ import vigilo
 
 class TestInit(unittest.TestCase):
     def test_version(self) -> None:
-        self.assertEqual(vigilo.__version__, "0.1.1")
+        self.assertEqual(vigilo.__version__, "0.2.0")
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ class TestReporter(unittest.TestCase):
 
     def test_text_report_clean(self) -> None:
         report = format_text_report([], use_color=False)
-        self.assertIn("No security vulnerabilities found", report)
+        self.assertIn("No security vulnerabilities or correctness issues found", report)
 
     def test_text_report_with_finding(self) -> None:
         report = format_text_report([self.finding], use_color=False)
@@ -43,7 +43,7 @@ class TestReporter(unittest.TestCase):
         report = format_json_report([self.finding])
         data = json.loads(report)
 
-        self.assertEqual(data["version"], "0.1.1")
+        self.assertEqual(data["version"], "0.2.0")
         self.assertEqual(data["summary"]["total"], 1)
         self.assertEqual(data["summary"]["high"], 1)
         self.assertEqual(len(data["findings"]), 1)
