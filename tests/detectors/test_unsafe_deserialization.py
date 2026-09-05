@@ -5,13 +5,14 @@ import unittest
 from pathlib import Path
 
 from vigilo.detectors.unsafe_deserialization import UnsafeDeserializationDetector
+from vigilo.models import Finding
 
 
 class TestUnsafeDeserializationDetector(unittest.TestCase):
     def setUp(self) -> None:
         self.detector = UnsafeDeserializationDetector()
 
-    def _scan(self, code: str) -> list:
+    def _scan(self, code: str) -> list[Finding]:
         tree = ast.parse(code)
         return self.detector.run(tree, Path("test.py"), code)
 

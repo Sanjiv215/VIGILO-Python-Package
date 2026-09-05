@@ -5,13 +5,14 @@ import unittest
 from pathlib import Path
 
 from vigilo.detectors.path_traversal import PathTraversalDetector
+from vigilo.models import Finding
 
 
 class TestPathTraversalDetector(unittest.TestCase):
     def setUp(self) -> None:
         self.detector = PathTraversalDetector()
 
-    def _scan(self, code: str) -> list:
+    def _scan(self, code: str) -> list[Finding]:
         tree = ast.parse(code)
         return self.detector.run(tree, Path("test.py"), code)
 

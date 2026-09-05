@@ -45,15 +45,15 @@ def scan(
 
 
 __all__ = [
+    "ALL_DETECTORS",
+    "CORRECTNESS_DETECTORS",
+    "SECURITY_DETECTORS",
+    "DetectorMeta",
+    "Finding",
+    "Location",
+    "ScanConfig",
+    "Scanner",
+    "Severity",
     "__version__",
     "scan",
-    "Scanner",
-    "ScanConfig",
-    "Finding",
-    "Severity",
-    "Location",
-    "DetectorMeta",
-    "SECURITY_DETECTORS",
-    "CORRECTNESS_DETECTORS",
-    "ALL_DETECTORS",
 ]

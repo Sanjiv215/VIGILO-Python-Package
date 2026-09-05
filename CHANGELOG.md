@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.2] - 2026-09-05
+
+### Security & Hardening (20-Technique Audit)
+- **Terminal Escape Injection Mitigation (CWE-150):**
+  - Added `sanitize_terminal_text()` in `src/vigilo/reporter.py` to sanitize ANSI escape codes and dangerous non-printable control characters from user source snippets, file paths, and messages before CLI rendering.
+- **Symlink Loop & Special Device Protection:**
+  - Added inode cycle detection (`visited_dirs`) in `discover_files()` to prevent infinite loops during symlink traversal, correctly skip non-regular files (`/dev/null`, fifos, character devices), and enforce non-traversal when `follow_symlinks=False`.
+- **Compiler Directive & Scope Hardening:**
+  - `UnusedCodeDetector` now ignores `from __future__ import ...` compiler directives.
+  - `ScopeVisitor` pre-populates module top-level function/class symbols and supports `ast.Lambda` arguments to avoid false-positive undefined name warnings on lambdas and module forward references.
+- **Bounded Dev Dependency Pins:**
+  - Pinned upper bounds on dev dependencies in `pyproject.toml` to guard against supply chain vulnerabilities.
+- **Continuous Security Integration:**
+  - Added CodeQL automated SAST workflow (`.github/workflows/codeql.yml`).
+  - Added property-based fuzz test suite (`tests/test_fuzz.py`) using `hypothesis`.
+  - Wired `mypy --strict`, expanded `ruff`, `bandit`, and `pip-audit` into CI gates.
+
+---
+
 ## [0.2.1] - 2026-09-05
 
 ### Fixed

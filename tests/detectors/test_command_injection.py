@@ -5,13 +5,14 @@ import unittest
 from pathlib import Path
 
 from vigilo.detectors.command_injection import CommandInjectionDetector
+from vigilo.models import Finding
 
 
 class TestCommandInjectionDetector(unittest.TestCase):
     def setUp(self) -> None:
         self.detector = CommandInjectionDetector()
 
-    def _scan(self, code: str) -> list:
+    def _scan(self, code: str) -> list[Finding]:
         tree = ast.parse(code)
         return self.detector.run(tree, Path("test.py"), code)
 

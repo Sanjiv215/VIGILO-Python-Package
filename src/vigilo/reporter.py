@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Sequence
 
 from vigilo._version import __version__
@@ -16,6 +17,16 @@ RED = "\033[31m"
 YELLOW = "\033[33m"
 CYAN = "\033[36m"
 GREEN = "\033[32m"
+
+# Pattern matching ANSI escape sequences and non-printable control characters
+_ANSI_OR_CONTROL_RE = re.compile(
+    r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]"
+)
+
+
+def sanitize_terminal_text(text: str) -> str:
+    """Sanitize text to prevent ANSI escape sequence injection and terminal manipulation."""
+    return _ANSI_OR_CONTROL_RE.sub("", text)
 
 
 def _severity_color(sev: Severity, use_color: bool) -> str:
@@ -48,7 +59,7 @@ def format_text_report(findings: Sequence[Finding], use_color: bool = True) -> s
         cat_counts[finding.category] = cat_counts.get(finding.category, 0) + 1
 
         sev_colored = f"{_severity_color(sev, use_color)}{sev.value.upper()}{reset}"
-        loc_str = f"{bold}{finding.location}{reset}"
+        loc_str = f"{bold}{sanitize_terminal_text(str(finding.location))}{reset}"
         conf_str = f"{dim}[confidence: {finding.confidence}]{reset}"
         meta = finding.detector
 
@@ -62,15 +73,17 @@ def format_text_report(findings: Sequence[Finding], use_color: bool = True) -> s
         lines.append(header)
 
         # Message
-        lines.append(f"  {dim}│{reset} {finding.message}")
+        sanitized_msg = sanitize_terminal_text(finding.message)
+        lines.append(f"  {dim}│{reset} {sanitized_msg}")
 
         # Code snippet if present
         if finding.source_line:
-            clean_source = finding.source_line.strip()
+            clean_source = sanitize_terminal_text(finding.source_line.strip())
             lines.append(f"  {dim}│{reset}   {clean_source}")
 
         # Fix guidance
-        lines.append(f"  {dim}│{reset} {bold}Fix:{reset} {finding.fix_hint}")
+        sanitized_hint = sanitize_terminal_text(finding.fix_hint)
+        lines.append(f"  {dim}│{reset} {bold}Fix:{reset} {sanitized_hint}")
         lines.append("")
 
     total = len(findings)

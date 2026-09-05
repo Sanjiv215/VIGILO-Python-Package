@@ -5,13 +5,14 @@ import unittest
 from pathlib import Path
 
 from vigilo.detectors.code_injection import CodeInjectionDetector
+from vigilo.models import Finding
 
 
 class TestCodeInjectionDetector(unittest.TestCase):
     def setUp(self) -> None:
         self.detector = CodeInjectionDetector()
 
-    def _scan(self, code: str) -> list:
+    def _scan(self, code: str) -> list[Finding]:
         tree = ast.parse(code)
         return self.detector.run(tree, Path("test.py"), code)
 

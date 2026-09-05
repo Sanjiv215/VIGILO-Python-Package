@@ -27,10 +27,30 @@ BUILTIN_NAMES = set(dir(builtins)) | {
 class ScopeVisitor(ast.NodeVisitor):
     """Tracks nested lexical scopes and finds referenced names that are not defined."""
 
-    def __init__(self) -> None:
+    def __init__(self, tree: ast.Module | None = None) -> None:
         self.scopes: list[set[str]] = [set(BUILTIN_NAMES)]
         self.undefined_nodes: list[tuple[ast.Name, str]] = []
         self.has_star_import = False
+
+        # Pre-populate module scope with top-level functions, classes, and assignments
+        if tree is not None:
+            for stmt in tree.body:
+                if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    self.scopes[0].add(stmt.name)
+                elif isinstance(stmt, ast.Import):
+                    for alias in stmt.names:
+                        self.scopes[0].add(alias.asname or alias.name.split(".")[0])
+                elif isinstance(stmt, ast.ImportFrom):
+                    if stmt.module != "__future__":
+                        for alias in stmt.names:
+                            if alias.name == "*":
+                                self.has_star_import = True
+                            else:
+                                self.scopes[0].add(alias.asname or alias.name)
+                elif isinstance(stmt, ast.Assign):
+                    for target in stmt.targets:
+                        for name in _extract_target_names(target):
+                            self.scopes[0].add(name)
 
     def push_scope(self) -> None:
         self.scopes.append(set())
@@ -79,6 +99,17 @@ class ScopeVisitor(ast.NodeVisitor):
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         self.visit_FunctionDef(node)
+
+    def visit_Lambda(self, node: ast.Lambda) -> None:
+        self.push_scope()
+        for arg in node.args.posonlyargs + node.args.args + node.args.kwonlyargs:
+            self.add_name(arg.arg)
+        if node.args.vararg:
+            self.add_name(node.args.vararg.arg)
+        if node.args.kwarg:
+            self.add_name(node.args.kwarg.arg)
+        self.generic_visit(node)
+        self.pop_scope()
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self.add_name(node.name)
@@ -177,7 +208,7 @@ class UndefinedNameDetector(BaseDetector):
     )
 
     def run(self, tree: ast.Module, file_path: Path, source: str) -> list[Finding]:
-        visitor = ScopeVisitor()
+        visitor = ScopeVisitor(tree)
         visitor.visit(tree)
 
         findings: list[Finding] = []

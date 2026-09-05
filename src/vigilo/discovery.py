@@ -80,17 +80,50 @@ def discover_files(
         return []
 
     discovered: list[Path] = []
+    visited_dirs: set[tuple[int, int]] = set()
+
+    # Track root directory inode to avoid cyclic descent
+    try:
+        root_stat = target_path.stat()
+        visited_dirs.add((root_stat.st_dev, root_stat.st_ino))
+    except OSError:
+        pass
 
     for root, dirs, files in os.walk(target_path, followlinks=follow_symlinks):
         root_path = Path(root)
 
-        # Filter directories in-place to avoid descending into excluded dirs
-        dirs[:] = [d for d in dirs if not should_exclude(root_path / d, excludes)]
+        # Prevent symlink directory loops when followlinks=True
+        if follow_symlinks:
+            pruned_dirs: list[str] = []
+            for d in dirs:
+                dir_path = root_path / d
+                if should_exclude(dir_path, excludes):
+                    continue
+                try:
+                    st = dir_path.stat()
+                    key = (st.st_dev, st.st_ino)
+                    if key in visited_dirs:
+                        continue  # Cycle detected, skip
+                    visited_dirs.add(key)
+                    pruned_dirs.append(d)
+                except OSError:
+                    continue
+            dirs[:] = pruned_dirs
+        else:
+            dirs[:] = [d for d in dirs if not should_exclude(root_path / d, excludes)]
 
         for file_name in files:
             if file_name.endswith(".py"):
                 file_path = root_path / file_name
+                # If follow_symlinks is False, do not follow file symlinks
+                if not follow_symlinks and file_path.is_symlink():
+                    continue
                 if not should_exclude(file_path, excludes):
-                    discovered.append(file_path)
+                    try:
+                        # Ensure it is a regular file (not a fifo/device)
+                        if file_path.is_file():
+                            discovered.append(file_path)
+                    except OSError:
+                        continue
 
     return sorted(discovered)

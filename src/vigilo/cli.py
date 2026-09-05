@@ -106,7 +106,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args_list:
         args_list = ["scan", "."]
     elif args_list[0] not in ("scan", "diagnose", "-h", "--help", "-V", "--version"):
-        args_list = ["scan"] + args_list
+        args_list = ["scan", *args_list]
 
     parser = build_parser()
 

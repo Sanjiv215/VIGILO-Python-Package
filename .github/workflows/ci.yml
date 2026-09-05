@@ -35,10 +35,14 @@ jobs:
       - name: Format check with ruff
         run: ruff format --check .
 
-      - name: Type check with mypy
-        run: |
-          mypy src
+      - name: Type check with mypy (strict)
+        run: mypy --strict src tests
+
+      - name: Security scan with bandit
+        run: bandit -r src/vigilo/ -s B112
+
+      - name: Dependency vulnerability audit with pip-audit
+        run: pip-audit
 
       - name: Run test suite
-        run: |
-          python -m unittest discover -s tests
+        run: python -m unittest discover -s tests

@@ -36,6 +36,9 @@ class UnusedCodeDetector(BaseDetector):
                         as_name = alias.asname or alias.name.split(".")[0]
                         imports[as_name] = (node, alias.name)
                 elif isinstance(node, ast.ImportFrom):
+                    # Do not flag compiler directives like `from __future__ import ...`
+                    if node.module == "__future__":
+                        continue
                     if node.names and node.names[0].name != "*":
                         for alias in node.names:
                             as_name = alias.asname or alias.name
