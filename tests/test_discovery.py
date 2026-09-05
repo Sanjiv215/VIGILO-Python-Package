@@ -1,8 +1,8 @@
 """Unit tests for file discovery and exclusion logic."""
 
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 from vigilo.discovery import discover_files, should_exclude
 

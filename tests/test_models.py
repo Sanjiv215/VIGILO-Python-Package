@@ -1,7 +1,7 @@
 """Unit tests for Vigilo core data models."""
 
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 from vigilo.models import DetectorMeta, Finding, Location, Severity
 

@@ -1,9 +1,9 @@
 """Unit tests for Vigilo scanner orchestrator."""
 
 import ast
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 from vigilo.detectors.base import BaseDetector
 from vigilo.models import DetectorMeta, Finding, Severity

@@ -1,6 +1,7 @@
 """Basic package test for Vigilo."""
 
 import unittest
+
 import vigilo
 
 
