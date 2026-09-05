@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.1] - 2026-09-05
+
+### Fixed
+- Fixed ruff per-file-ignore glob not matching nested test paths, causing false lint failures on Ubuntu/macOS CI runners.
+- Fixed `Sequence` import from `collections.abc` and sorted imports across test suite.
+- Gated release pipeline to require 100% success of the full cross-platform test matrix before building or publishing packages.
+
+---
+
 ## [0.1.0] - 2026-09-05
 
 ### Added

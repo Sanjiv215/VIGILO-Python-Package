@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 
+from vigilo._version import __version__
 from vigilo.models import Finding, Severity
 
 # ANSI Color Codes
@@ -80,7 +81,7 @@ def format_text_report(findings: Sequence[Finding], use_color: bool = True) -> s
 def format_json_report(findings: Sequence[Finding]) -> str:
     """Format findings as structured JSON string."""
     data = {
-        "version": "0.1.0",
+        "version": __version__,
         "findings": [
             {
                 "id": f.detector.id,

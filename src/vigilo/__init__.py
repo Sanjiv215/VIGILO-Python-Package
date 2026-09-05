@@ -5,10 +5,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
+from vigilo._version import __version__
 from vigilo.models import DetectorMeta, Finding, Location, Severity
 from vigilo.scanner import ScanConfig, Scanner
-
-__version__ = "0.1.0"
 
 
 def scan(
