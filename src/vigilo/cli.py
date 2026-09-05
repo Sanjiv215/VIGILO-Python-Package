@@ -31,15 +31,22 @@ def build_parser() -> argparse.ArgumentParser:
     # 1. `vigilo scan`
     scan_parser = subparsers.add_parser(
         "scan",
-        help="Scan a directory or file for security vulnerabilities",
+        help="Scan a directory or file for security vulnerabilities and code correctness",
     )
     _add_common_arguments(scan_parser)
+    scan_parser.add_argument(
+        "--security-only",
+        "-S",
+        action="store_true",
+        default=False,
+        help="Run security detectors only, excluding code correctness diagnostics",
+    )
     scan_parser.add_argument(
         "--correctness",
         "-c",
         action="store_true",
-        default=False,
-        help="Include code correctness diagnostics (syntax, undefined names, resource leaks)",
+        default=True,
+        help="Include code correctness diagnostics (default: True)",
     )
 
     # 2. `vigilo diagnose`
@@ -123,7 +130,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     min_sev_str = getattr(args, "min_severity", "low")
     excludes = getattr(args, "exclude", [])
     no_color = getattr(args, "no_color", False)
-    include_correctness = command == "diagnose" or getattr(args, "correctness", False)
+    security_only = getattr(args, "security_only", False)
+    include_correctness = command == "diagnose" or not security_only
 
     min_severity = Severity(min_sev_str.lower())
     use_color = not no_color and sys.stdout.isatty() and out_format == "text"

@@ -72,4 +72,44 @@ class UnusedCodeDetector(BaseDetector):
                     )
                 )
 
+        # 3. Check for unused local variables in functions
+        for func_node in ast.walk(tree):
+            if isinstance(func_node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                # Find global / nonlocal names in this function
+                globals_nonlocals: set[str] = set()
+                for child in ast.walk(func_node):
+                    if isinstance(child, (ast.Global, ast.Nonlocal)):
+                        globals_nonlocals.update(child.names)
+
+                # Collect local assignments and loads within this function
+                local_assignments: dict[str, ast.AST] = {}
+                local_loads: set[str] = set()
+
+                for child in ast.walk(func_node):
+                    if child is func_node:
+                        continue
+                    if isinstance(child, ast.Name):
+                        if isinstance(child.ctx, ast.Store):
+                            if not child.id.startswith("_") and child.id not in globals_nonlocals:
+                                if child.id not in local_assignments:
+                                    local_assignments[child.id] = child
+                        elif isinstance(child.ctx, ast.Load):
+                            local_loads.add(child.id)
+
+                for var_name, assign_node in local_assignments.items():
+                    if var_name not in local_loads:
+                        findings.append(
+                            self.create_finding(
+                                node=assign_node,
+                                file_path=file_path,
+                                source=source,
+                                message=f"Local variable `{var_name}` is assigned but never used.",
+                                fix_hint=(
+                                    f"Remove unused variable `{var_name}` or "
+                                    "prefix with `_` if intentional."
+                                ),
+                                confidence="high",
+                            )
+                        )
+
         return findings

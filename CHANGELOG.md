@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.1] - 2026-09-05
+
+### Fixed
+- **Pipeline Wiring & Default Invocation:**
+  - Correctness diagnostics are now executed by default in `vigilo scan` and `vigilo.scan()` without requiring explicit opt-in flags, ensuring syntax errors, indentation errors, and typos like `PRint(...)` are immediately surfaced. Added `--security-only` (`-S`) flag to allow running only security detectors when desired.
+- **Unused Local Variables (VIGILO-C03):**
+  - Implemented missing unused local variable detection inside functions (previously only unused imports were checked).
+- **Undefined Name Scope Resolution (VIGILO-C02):**
+  - Added `visit_ExceptHandler` and pattern matching visitor methods (`MatchAs`, `MatchStar`, `MatchMapping`) to `ScopeVisitor` to prevent false positives on exception bindings (e.g. `except Exception as e:`).
+- **Indentation Error Messaging (VIGILO-C01):**
+  - Differentiated `IndentationError` and `TabError` with specific messages and fix hints rather than generic syntax error text.
+- **Permanent Fixtures:**
+  - Added comprehensive fixture test suite in `tests/fixtures/diagnostics/` covering all 6 diagnostic and security categories.
+
+---
+
 ## [0.2.0] - 2026-09-05
 
 ### Added

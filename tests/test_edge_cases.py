@@ -31,10 +31,16 @@ class TestEdgeCases(unittest.TestCase):
             (tmp / "broken.py").write_text("def unclosed_func(:\n    pass\n")
             (tmp / "valid_vuln.py").write_text("def run(cmd):\n    eval(cmd)\n")
 
-            # Scanner should skip broken.py and still detect valid_vuln.py
-            findings = scan(tmp)
-            self.assertEqual(len(findings), 1)
-            self.assertEqual(findings[0].detector.id, "VIGILO-003")
+            # Security scan should skip broken.py and detect valid_vuln.py
+            sec_findings = scan(tmp, include_correctness=False)
+            self.assertEqual(len(sec_findings), 1)
+            self.assertEqual(sec_findings[0].detector.id, "VIGILO-003")
+
+            # Full scan detects both syntax error on broken.py and code injection on valid_vuln.py
+            all_findings = scan(tmp)
+            self.assertEqual(len(all_findings), 2)
+            detector_ids = {f.detector.id for f in all_findings}
+            self.assertEqual(detector_ids, {"VIGILO-C01", "VIGILO-003"})
 
     def test_latin1_encoding_handling(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -44,7 +50,7 @@ class TestEdgeCases(unittest.TestCase):
             content = "# -*- coding: latin-1 -*-\n# Café\ndef run(cmd):\n    eval(cmd)\n"
             file_path.write_bytes(content.encode("latin-1"))
 
-            findings = scan(tmp)
+            findings = scan(tmp, include_correctness=False)
             self.assertEqual(len(findings), 1)
             self.assertEqual(findings[0].detector.id, "VIGILO-003")
 
@@ -59,7 +65,7 @@ class TestEdgeCases(unittest.TestCase):
             lines.insert(1000, "def handler(q):\n    db.execute(f'SELECT {q}')")
             large_file.write_text("\n".join(lines))
 
-            findings = scan(tmp)
+            findings = scan(tmp, include_correctness=False)
             self.assertEqual(len(findings), 1)
             self.assertEqual(findings[0].detector.id, "VIGILO-001")
 
@@ -89,7 +95,7 @@ def do_everything(user_input):
         pass
 """
             )
-            findings = scan(tmp)
+            findings = scan(tmp, include_correctness=False)
             # Detects Code Injection, 2x Command Injection, Path Traversal
             self.assertEqual(len(findings), 4)
 

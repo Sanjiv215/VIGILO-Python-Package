@@ -22,7 +22,7 @@ class ScanConfig:
     min_severity: Severity = Severity.LOW
     detectors: Sequence[type[BaseDetector]] | None = None
     follow_symlinks: bool = False
-    include_correctness: bool = False
+    include_correctness: bool = True
     categories: Sequence[str] | None = None
 
 

@@ -15,7 +15,7 @@ def scan(
     path: Path | str = ".",
     min_severity: Severity | str = Severity.LOW,
     exclude_patterns: Sequence[str] | None = None,
-    include_correctness: bool = False,
+    include_correctness: bool = True,
     categories: Sequence[str] | None = None,
 ) -> list[Finding]:
     """Scan a target path for security vulnerabilities (and optionally correctness diagnostics).

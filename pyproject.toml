@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vigilo"
-version = "0.2.0"
+version = "0.2.1"
 description = "A fast, zero-configuration static security scanner that detects known vulnerability patterns in Python codebases."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -43,6 +43,7 @@ packages = ["src/vigilo"]
 [tool.ruff]
 target-version = "py310"
 line-length = 100
+extend-exclude = ["tests/fixtures"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "S"]

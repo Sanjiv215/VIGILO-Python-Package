@@ -85,7 +85,7 @@ class TestCLI(unittest.TestCase):
                 sys.stdout = old_stdout
 
             self.assertEqual(code, 0)
-            self.assertIn('"version": "0.2.0"', stdout_capture.getvalue())
+            self.assertIn('"version": "0.2.1"', stdout_capture.getvalue())
 
     def test_cli_non_existent_path(self) -> None:
         stderr_capture = io.StringIO()

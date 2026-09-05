@@ -43,7 +43,7 @@ class TestReporter(unittest.TestCase):
         report = format_json_report([self.finding])
         data = json.loads(report)
 
-        self.assertEqual(data["version"], "0.2.0")
+        self.assertEqual(data["version"], "0.2.1")
         self.assertEqual(data["summary"]["total"], 1)
         self.assertEqual(data["summary"]["high"], 1)
         self.assertEqual(len(data["findings"]), 1)

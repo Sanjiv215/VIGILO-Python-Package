@@ -41,8 +41,12 @@ class SyntaxErrorDetector(BaseDetector):
             col=col_offset,
         )
 
-        msg = f"Syntax error: {error.msg}"
-        fix_hint = f"Fix syntax or indentation error at line {lineno}."
+        if isinstance(error, (IndentationError, TabError)):
+            msg = f"Indentation error: {error.msg}"
+            fix_hint = f"Fix indentation or spacing at line {lineno}."
+        else:
+            msg = f"Syntax error: {error.msg}"
+            fix_hint = f"Fix syntax error at line {lineno}."
 
         return Finding(
             detector=self.meta,

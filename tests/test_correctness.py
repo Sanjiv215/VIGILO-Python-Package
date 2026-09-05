@@ -37,7 +37,7 @@ class TestCorrectnessDiagnostics(unittest.TestCase):
             findings = scan(tmp, include_correctness=True)
             self.assertEqual(len(findings), 1)
             self.assertEqual(findings[0].detector.id, "VIGILO-C01")
-            self.assertIn("Syntax error", findings[0].message)
+            self.assertIn("Indentation error", findings[0].message)
 
     def test_undefined_name_detection(self) -> None:
         code = """
@@ -147,17 +147,28 @@ def safe_task():
             self.assertEqual(findings[0].detector.id, "VIGILO-C05")
             self.assertEqual(findings[0].location.line, 5)
 
-    def test_cli_diagnose_and_correctness_flag(self) -> None:
+    def test_cli_security_only_flag(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             (tmp / "broken.py").write_text("def test():\n    return typo_var\n")
 
-            # 1. `vigilo scan` (default security only) -> clean
-            out_sec = io.StringIO()
+            # 1. `vigilo scan` (default includes correctness) -> reports VIGILO-C02
+            out_default = io.StringIO()
             old_stdout = sys.stdout
             try:
+                sys.stdout = out_default
+                code_default = main(["scan", str(tmp), "--no-color"])
+            finally:
+                sys.stdout = old_stdout
+
+            self.assertEqual(code_default, 1)
+            self.assertIn("VIGILO-C02", out_default.getvalue())
+
+            # 2. `vigilo scan --security-only` -> clean (0 security findings)
+            out_sec = io.StringIO()
+            try:
                 sys.stdout = out_sec
-                code_sec = main(["scan", str(tmp), "--no-color"])
+                code_sec = main(["scan", str(tmp), "--security-only", "--no-color"])
             finally:
                 sys.stdout = old_stdout
 
@@ -165,28 +176,80 @@ def safe_task():
             clean_msg = "No security vulnerabilities or correctness issues found"
             self.assertIn(clean_msg, out_sec.getvalue())
 
-            # 2. `vigilo scan --correctness` -> reports VIGILO-C02
-            out_corr = io.StringIO()
-            try:
-                sys.stdout = out_corr
-                code_corr = main(["scan", str(tmp), "--correctness", "--no-color"])
-            finally:
-                sys.stdout = old_stdout
+    def test_fixtures_diagnostics(self) -> None:
+        fixture_dir = Path(__file__).parent / "fixtures" / "diagnostics"
 
-            self.assertEqual(code_corr, 1)
-            self.assertIn("VIGILO-C02", out_corr.getvalue())
-            self.assertIn("CORRECTNESS", out_corr.getvalue())
+        # Syntax errors
+        res = scan(fixture_dir / "syntax_missing_colon.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C01" for f in res))
 
-            # 3. `vigilo diagnose` -> reports VIGILO-C02
-            out_diag = io.StringIO()
-            try:
-                sys.stdout = out_diag
-                code_diag = main(["diagnose", str(tmp), "--no-color"])
-            finally:
-                sys.stdout = old_stdout
+        res = scan(fixture_dir / "syntax_unclosed_paren.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C01" for f in res))
 
-            self.assertEqual(code_diag, 1)
-            self.assertIn("VIGILO-C02", out_diag.getvalue())
+        res = scan(fixture_dir / "syntax_invalid.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C01" for f in res))
+
+        # Indentation errors
+        res = scan(fixture_dir / "indent_mismatched.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C01" for f in res))
+
+        res = scan(fixture_dir / "indent_unexpected.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C01" for f in res))
+
+        res = scan(fixture_dir / "indent_mixed_tabs.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C01" for f in res))
+
+        # Undefined names / typos
+        res = scan(fixture_dir / "undef_print_typo.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C02" and "PRint" in f.message for f in res))
+
+        res = scan(fixture_dir / "undef_var_typo.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C02" and "total" in f.message for f in res))
+
+        res = scan(fixture_dir / "undef_unimported_func.py")
+        self.assertTrue(
+            any(
+                f.detector.id == "VIGILO-C02" and "fetch_data_from_remote_api" in f.message
+                for f in res
+            )
+        )
+
+        res = scan(fixture_dir / "undef_cross_scope.py")
+        self.assertTrue(
+            any(f.detector.id == "VIGILO-C02" and "secret_value" in f.message for f in res)
+        )
+
+        # Unused imports & unused variables
+        res = scan(fixture_dir / "unused_import.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C03" and "math" in f.message for f in res))
+
+        res = scan(fixture_dir / "unused_variable.py")
+        self.assertTrue(
+            any(f.detector.id == "VIGILO-C03" and "unused_val" in f.message for f in res)
+        )
+
+        # File resources & bare except
+        res = scan(fixture_dir / "resource_unclosed_open.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C04" for f in res))
+
+        res = scan(fixture_dir / "resource_bare_except.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-C05" for f in res))
+
+        # Security regression
+        res = scan(fixture_dir / "security_sql_injection.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-001" for f in res))
+
+        res = scan(fixture_dir / "security_command_injection.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-002" for f in res))
+
+        res = scan(fixture_dir / "security_code_injection.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-003" for f in res))
+
+        res = scan(fixture_dir / "security_deserialization.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-004" for f in res))
+
+        res = scan(fixture_dir / "security_path_traversal.py")
+        self.assertTrue(any(f.detector.id == "VIGILO-005" for f in res))
 
 
 if __name__ == "__main__":
