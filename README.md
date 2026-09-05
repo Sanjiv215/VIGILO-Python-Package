@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Sanjiv215/VIGILO-Python-Package/actions/workflows/ci.yml/badge.svg)](https://github.com/Sanjiv215/VIGILO-Python-Package/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/LICENSE)
 [![PyPI version](https://img.shields.io/pypi/v/vigilo.svg)](https://pypi.org/project/vigilo/)
 
 **Vigilo** is a fast, zero-configuration static security scanner for Python. It detects exploitable vulnerability patterns (CWEs) in first-party code using AST traversal combined with local data-flow analysis to minimize false positives.
@@ -136,10 +136,10 @@ Options:
 
 ## Contributing
 
-We welcome contributions! Please review our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
+We welcome contributions! Please review our [Contributing Guide](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/CONTRIBUTING.md), [Code of Conduct](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/CODE_OF_CONDUCT.md), and [Security Policy](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/SECURITY.md).
 
 ---
 
 ## License
 
-Distributed under the [MIT License](LICENSE). Copyright (c) 2026 Sanjiv - Vigilo.
+Distributed under the [MIT License](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/LICENSE). Copyright (c) 2026 Sanjiv - Vigilo.
