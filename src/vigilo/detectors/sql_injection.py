@@ -1,13 +1,13 @@
-"""Detector for SQL Injection vulnerabilities (CWE-89 / OJO-001)."""
+"""Detector for SQL Injection vulnerabilities (CWE-89 / VIGILO-001)."""
 
 from __future__ import annotations
 
 import ast
 from pathlib import Path
 
-from ojo.detectors.base import BaseDetector
-from ojo.flow import FlowAnalyzer
-from ojo.models import DetectorMeta, Finding, Severity
+from vigilo.detectors.base import BaseDetector
+from vigilo.flow import FlowAnalyzer
+from vigilo.models import DetectorMeta, Finding, Severity
 
 SQL_METHOD_NAMES = {
     "execute",
@@ -21,7 +21,7 @@ class SQLInjectionDetector(BaseDetector):
     """Detects SQL queries built with dynamic string formatting or concatenation."""
 
     meta = DetectorMeta(
-        id="OJO-001",
+        id="VIGILO-001",
         name="SQL Injection",
         cwe=89,
         description="Detects unparameterized SQL queries built via dynamic string formatting",

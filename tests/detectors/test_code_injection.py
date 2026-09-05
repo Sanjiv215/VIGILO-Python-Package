@@ -1,10 +1,10 @@
-"""Unit tests for Code Injection detector (OJO-003 / CWE-94)."""
+"""Unit tests for Code Injection detector (VIGILO-003 / CWE-94)."""
 
 import ast
 import unittest
 from pathlib import Path
 
-from ojo.detectors.code_injection import CodeInjectionDetector
+from vigilo.detectors.code_injection import CodeInjectionDetector
 
 
 class TestCodeInjectionDetector(unittest.TestCase):
@@ -22,7 +22,7 @@ def calc(expr):
 """
         findings = self._scan(code)
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0].detector.id, "OJO-003")
+        self.assertEqual(findings[0].detector.id, "VIGILO-003")
 
     def test_exec_dynamic_flagged(self) -> None:
         code = """

@@ -1,13 +1,13 @@
-"""Detector for Unsafe Deserialization vulnerabilities (CWE-502 / OJO-004)."""
+"""Detector for Unsafe Deserialization vulnerabilities (CWE-502 / VIGILO-004)."""
 
 from __future__ import annotations
 
 import ast
 from pathlib import Path
 
-from ojo.detectors.base import BaseDetector
-from ojo.flow import FlowAnalyzer
-from ojo.models import DetectorMeta, Finding, Severity
+from vigilo.detectors.base import BaseDetector
+from vigilo.flow import FlowAnalyzer
+from vigilo.models import DetectorMeta, Finding, Severity
 
 SAFE_YAML_LOADERS = {
     "SafeLoader",
@@ -24,7 +24,7 @@ class UnsafeDeserializationDetector(BaseDetector):
     """Detects unsafe deserialization using pickle, marshal, or PyYAML without SafeLoader."""
 
     meta = DetectorMeta(
-        id="OJO-004",
+        id="VIGILO-004",
         name="Unsafe Deserialization",
         cwe=502,
         description="Detects insecure deserialization with pickle, marshal, or unsafe PyYAML",

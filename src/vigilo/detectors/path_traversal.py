@@ -1,13 +1,13 @@
-"""Detector for Path Traversal vulnerabilities (CWE-22 / OJO-005)."""
+"""Detector for Path Traversal vulnerabilities (CWE-22 / VIGILO-005)."""
 
 from __future__ import annotations
 
 import ast
 from pathlib import Path
 
-from ojo.detectors.base import BaseDetector
-from ojo.flow import FlowAnalyzer
-from ojo.models import DetectorMeta, Finding, Severity
+from vigilo.detectors.base import BaseDetector
+from vigilo.flow import FlowAnalyzer
+from vigilo.models import DetectorMeta, Finding, Severity
 
 PATH_OPEN_FUNCTIONS = {"open"}
 PATH_MODULE_FUNCTIONS = {("os", "open"), ("io", "open")}
@@ -17,7 +17,7 @@ class PathTraversalDetector(BaseDetector):
     """Detects unsafe file path construction that may allow directory traversal."""
 
     meta = DetectorMeta(
-        id="OJO-005",
+        id="VIGILO-005",
         name="Path Traversal",
         cwe=22,
         description="Detects dynamic or user-controlled paths passed to file open functions",

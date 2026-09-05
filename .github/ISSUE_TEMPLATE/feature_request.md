@@ -1,6 +1,6 @@
 ---
 name: Feature / Detector request
-about: Suggest an idea, detector, or rule for OJO
+about: Suggest an idea, detector, or rule for Vigilo
 title: '[FEAT] '
 labels: 'enhancement'
 assignees: ''

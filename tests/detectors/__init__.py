@@ -1,1 +1,1 @@
-"""Unit tests for OJO detectors."""
+"""Unit tests for Vigilo detectors."""

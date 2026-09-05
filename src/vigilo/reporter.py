@@ -1,11 +1,11 @@
-"""Reporters for formatting finding results into text or JSON output."""
+"""Reporters for formatting finding results into text or JSON output in Vigilo."""
 
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from typing import Sequence
 
-from ojo.models import Finding, Severity
+from vigilo.models import Finding, Severity
 
 # ANSI Color Codes
 RESET = "\033[0m"

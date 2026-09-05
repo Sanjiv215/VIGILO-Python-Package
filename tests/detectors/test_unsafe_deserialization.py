@@ -1,10 +1,10 @@
-"""Unit tests for Unsafe Deserialization detector (OJO-004 / CWE-502)."""
+"""Unit tests for Unsafe Deserialization detector (VIGILO-004 / CWE-502)."""
 
 import ast
 import unittest
 from pathlib import Path
 
-from ojo.detectors.unsafe_deserialization import UnsafeDeserializationDetector
+from vigilo.detectors.unsafe_deserialization import UnsafeDeserializationDetector
 
 
 class TestUnsafeDeserializationDetector(unittest.TestCase):
@@ -24,7 +24,7 @@ def load_payload(data):
 """
         findings = self._scan(code)
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0].detector.id, "OJO-004")
+        self.assertEqual(findings[0].detector.id, "VIGILO-004")
 
     def test_yaml_load_unsafe_flagged(self) -> None:
         code = """
@@ -35,7 +35,7 @@ def parse_config(raw_yaml):
 """
         findings = self._scan(code)
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0].detector.id, "OJO-004")
+        self.assertEqual(findings[0].detector.id, "VIGILO-004")
 
     def test_yaml_safe_load_not_flagged(self) -> None:
         code = """

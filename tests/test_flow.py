@@ -3,7 +3,7 @@
 import ast
 import unittest
 
-from ojo.flow import FlowAnalyzer
+from vigilo.flow import FlowAnalyzer
 
 
 class TestFlowAnalyzer(unittest.TestCase):

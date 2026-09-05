@@ -1,4 +1,4 @@
-"""Scanner orchestrator for executing detectors across discovered files."""
+"""Scanner orchestrator for executing detectors across discovered files in Vigilo."""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from ojo.detectors import ALL_DETECTORS, BaseDetector
-from ojo.discovery import discover_files
-from ojo.models import Finding, Severity
+from vigilo.detectors import ALL_DETECTORS, BaseDetector
+from vigilo.discovery import discover_files
+from vigilo.models import Finding, Severity
 
 
 @dataclass

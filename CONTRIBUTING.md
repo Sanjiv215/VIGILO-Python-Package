@@ -1,6 +1,6 @@
-# Contributing to OJO
+# Contributing to Vigilo
 
-Thank you for contributing to OJO! This document outlines our development workflows and guidelines.
+Thank you for contributing to Vigilo! This document outlines our development workflows and guidelines.
 
 ---
 
@@ -8,8 +8,8 @@ Thank you for contributing to OJO! This document outlines our development workfl
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Sanjiv215/OJO-Python-Package.git
-   cd OJO-Python-Package
+   git clone https://github.com/Sanjiv215/VIGILO-Python-Package.git
+   cd VIGILO-Python-Package
    ```
 
 2. **Create a virtual environment (Python 3.10+):**
@@ -47,13 +47,13 @@ mypy src
 
 To add a new vulnerability detector:
 
-1. **Create a new detector file** in `src/ojo/detectors/<detector_name>.py`:
-   - Subclass `BaseDetector` from `ojo.detectors.base`.
-   - Define class attribute `meta = DetectorMeta(id="OJO-XXX", name="...", cwe=..., description="...", severity=Severity.HIGH)`.
+1. **Create a new detector file** in `src/vigilo/detectors/<detector_name>.py`:
+   - Subclass `BaseDetector` from `vigilo.detectors.base`.
+   - Define class attribute `meta = DetectorMeta(id="VIGILO-XXX", name="...", cwe=..., description="...", severity=Severity.HIGH)`.
    - Implement `run(tree, file_path, source) -> list[Finding]`.
    - Use `FlowAnalyzer.is_dynamic()` or `FlowAnalyzer.is_constant()` to eliminate false positives.
 
-2. **Register the detector** in `src/ojo/detectors/__init__.py`:
+2. **Register the detector** in `src/vigilo/detectors/__init__.py`:
    - Add the detector class to `ALL_DETECTORS`.
 
 3. **Add comprehensive unit tests** in `tests/detectors/test_<detector_name>.py`:

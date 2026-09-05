@@ -1,4 +1,4 @@
-# OJO Architecture
+# Vigilo Architecture
 
 ## Scanning Pipeline
 
@@ -19,7 +19,7 @@ Discovery → Parser → Detectors → Collector → Reporter
 
 - **`Severity`** — enum: `LOW`, `MEDIUM`, `HIGH`
 - **`Location`** — file path, line, col, end_line, end_col
-- **`DetectorMeta`** — detector ID (`OJO-001`), name, CWE number, description, default severity
+- **`DetectorMeta`** — detector ID (`VIGILO-001`), name, CWE number, description, default severity
 - **`Finding`** — detector meta + location + message + fix hint + severity + confidence + source line
 
 All models are frozen dataclasses (immutable, hashable).
@@ -46,8 +46,8 @@ Add a detector: subclass `BaseDetector`, set `meta`, implement `run()`, add to r
 ## CLI
 
 ```
-ojo scan <path>       # canonical
-ojo <path>            # alias for ojo scan <path>
+vigilo scan <path>       # canonical
+vigilo <path>            # alias for vigilo scan <path>
 
 Options: --format {text,json}, --min-severity {low,medium,high},
          --exclude PATTERN, --no-color, --version
@@ -57,7 +57,7 @@ Exit: 0 = clean, 1 = findings, 2 = error
 ## Public API
 
 ```python
-from ojo import scan, Scanner, ScanConfig, Finding, Severity
+from vigilo import scan, Scanner, ScanConfig, Finding, Severity
 
 findings = scan(".")
 ```

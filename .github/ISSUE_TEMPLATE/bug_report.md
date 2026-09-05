@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help us improve OJO
+about: Create a report to help us improve Vigilo
 title: '[BUG] '
 labels: 'bug'
 assignees: ''
@@ -19,7 +19,7 @@ Code snippet where the false positive, false negative, or crash occurred:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**OJO Version & Environment**
-- OJO version (`ojo --version`):
+**Vigilo Version & Environment**
+- Vigilo version (`vigilo --version`):
 - Python version (`python --version`):
 - Operating System:

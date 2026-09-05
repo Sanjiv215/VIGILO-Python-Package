@@ -1,22 +1,22 @@
-# OJO
+# Vigilo
 
-[![CI](https://github.com/Sanjiv215/OJO-Python-Package/actions/workflows/ci.yml/badge.svg)](https://github.com/Sanjiv215/OJO-Python-Package/actions)
+[![CI](https://github.com/Sanjiv215/VIGILO-Python-Package/actions/workflows/ci.yml/badge.svg)](https://github.com/Sanjiv215/VIGILO-Python-Package/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![PyPI version](https://img.shields.io/badge/pypi-ojo--scan-blue.svg)](https://pypi.org/project/ojo-scan/)
+[![PyPI version](https://img.shields.io/pypi/v/vigilo.svg)](https://pypi.org/project/vigilo/)
 
-**OJO** is a fast, zero-configuration static security scanner for Python. It detects exploitable vulnerability patterns (CWEs) in first-party code using AST traversal combined with local data-flow analysis to minimize false positives.
+**Vigilo** is a fast, zero-configuration static security scanner for Python. It detects exploitable vulnerability patterns (CWEs) in first-party code using AST traversal combined with local data-flow analysis to minimize false positives.
 
 Runs across **Linux**, **macOS**, and **Windows** — either via `pip` or as a standalone binary with **no Python installation required**.
 
 ---
 
-## Why OJO?
+## Why Vigilo?
 
-- **High-Signal over High-Noise:** Traditional linters (like Bandit) flag safe string constants and standard library calls indiscriminately. OJO uses local data-flow analysis to distinguish harmless constants from untrusted dynamic inputs.
-- **Zero Configuration:** Drop it directly into your workflow or CI pipeline with `ojo scan .`. No YAML rule authoring or database setup required.
+- **High-Signal over High-Noise:** Traditional linters (like Bandit) flag safe string constants and standard library calls indiscriminately. Vigilo uses local data-flow analysis to distinguish harmless constants from untrusted dynamic inputs.
+- **Zero Configuration:** Drop it directly into your workflow or CI pipeline with `vigilo scan .` or `vigilo .`. No YAML rule authoring or database setup required.
 - **Zero Runtime Dependencies:** Built strictly on Python's standard library. Lightweight and instantaneous.
-- **First-Party Code Focus:** While tools like `pip-audit` scan third-party dependencies for CVEs, OJO scans *your* code for logic and injection flaws.
+- **First-Party Code Focus:** While tools like `pip-audit` scan third-party dependencies for CVEs, Vigilo scans *your* code for logic and injection flaws.
 
 ---
 
@@ -25,16 +25,16 @@ Runs across **Linux**, **macOS**, and **Windows** — either via `pip` or as a s
 ### Option A: Install via PyPI (Python 3.10+)
 
 ```bash
-pip install ojo-scan
+pip install vigilo
 ```
 
 ### Option B: Standalone Executable (No Python Required)
 
-Pre-built standalone single-file executables are available for Linux, macOS, and Windows on the [Releases Page](https://github.com/Sanjiv215/OJO-Python-Package/releases):
+Pre-built standalone single-file executables are available for Linux, macOS, and Windows on the [Releases Page](https://github.com/Sanjiv215/VIGILO-Python-Package/releases):
 
-- **Linux (x86_64):** `ojo-linux-x86_64`
-- **macOS:** `ojo-macos`
-- **Windows (x86_64):** `ojo-windows-x86_64.exe`
+- **Linux (x86_64):** `vigilo-linux-x86_64`
+- **macOS:** `vigilo-macos`
+- **Windows (x86_64):** `vigilo-windows-x86_64.exe`
 
 #### Verifying Checksums
 
@@ -45,7 +45,7 @@ Every release includes a `SHA256SUMS.txt` file to verify binary integrity:
 sha256sum -c SHA256SUMS.txt
 ```
 
-> **Note on Antivirus Alerts:** Standalone executables are bundled with PyInstaller. Some heuristic antivirus engines or Windows SmartScreen may occasionally flag newly published PyInstaller binaries as unfamiliar. This is a known false positive with packed binaries. You can verify the integrity using the SHA256 checksum or install via `pip install ojo-scan` to run from source.
+> **Note on Antivirus Alerts:** Standalone executables are bundled with PyInstaller. Some heuristic antivirus engines or Windows SmartScreen may occasionally flag newly published PyInstaller binaries as unfamiliar. This is a known false positive with packed binaries. You can verify the integrity using the SHA256 checksum or install via `pip install vigilo` to run from source.
 
 ---
 
@@ -54,37 +54,37 @@ sha256sum -c SHA256SUMS.txt
 Scan the current directory:
 
 ```bash
-ojo scan .
+vigilo scan .
 ```
 
 Or use the shortcut alias:
 
 ```bash
-ojo .
+vigilo .
 ```
 
 Generate structured JSON output for CI/CD pipelines:
 
 ```bash
-ojo scan . --format json
+vigilo scan . --format json
 ```
 
 Filter by minimum severity:
 
 ```bash
-ojo scan . --min-severity high
+vigilo scan . --min-severity high
 ```
 
 Exclude specific directories or glob patterns:
 
 ```bash
-ojo scan . --exclude "tests/*" --exclude "migrations/*"
+vigilo scan . --exclude "tests/*" --exclude "migrations/*"
 ```
 
 ### Python API
 
 ```python
-from ojo import scan
+from vigilo import scan
 
 findings = scan("src/")
 
@@ -100,19 +100,19 @@ for finding in findings:
 
 | ID | CWE | Vulnerability | Severity | Target APIs |
 |---|---|---|---|---|
-| **`OJO-001`** | CWE-89 | SQL Injection | `HIGH` | `db.execute()`, `cursor.execute()`, `text()`, `raw()` |
-| **`OJO-002`** | CWE-78 | OS Command Injection | `HIGH` | `subprocess.*(shell=True)`, `os.system()`, `os.popen()` |
-| **`OJO-003`** | CWE-94 | Code Injection | `HIGH` | `eval()`, `exec()`, `compile()` |
-| **`OJO-004`** | CWE-502 | Unsafe Deserialization | `HIGH` | `pickle.loads()`, `yaml.load()`, `marshal.loads()` |
-| **`OJO-005`** | CWE-22 | Path Traversal | `HIGH` | `open()`, `os.open()`, `io.open()` |
+| **`VIGILO-001`** | CWE-89 | SQL Injection | `HIGH` | `db.execute()`, `cursor.execute()`, `text()`, `raw()` |
+| **`VIGILO-002`** | CWE-78 | OS Command Injection | `HIGH` | `subprocess.*(shell=True)`, `os.system()`, `os.popen()` |
+| **`VIGILO-003`** | CWE-94 | Code Injection | `HIGH` | `eval()`, `exec()`, `compile()` |
+| **`VIGILO-004`** | CWE-502 | Unsafe Deserialization | `HIGH` | `pickle.loads()`, `yaml.load()`, `marshal.loads()` |
+| **`VIGILO-005`** | CWE-22 | Path Traversal | `HIGH` | `open()`, `os.open()`, `io.open()` |
 
 ---
 
 ## CLI Reference
 
 ```
-usage: ojo [-h] [--version] {scan} ... [target] [--format {text,json}]
-           [--min-severity {low,medium,high}] [--exclude EXCLUDE] [--no-color]
+usage: vigilo [-h] [--version] {scan} ... [target] [--format {text,json}]
+              [--min-severity {low,medium,high}] [--exclude EXCLUDE] [--no-color]
 
 Options:
   target                Directory or file to scan (default: '.')
@@ -142,4 +142,4 @@ We welcome contributions! Please review our [Contributing Guide](CONTRIBUTING.md
 
 ## License
 
-Distributed under the [MIT License](LICENSE). Copyright (c) 2026 Sanjiv.
+Distributed under the [MIT License](LICENSE). Copyright (c) 2026 Sanjiv - Vigilo.

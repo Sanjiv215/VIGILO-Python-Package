@@ -1,4 +1,4 @@
-"""Unit tests for OJO CLI and top-level public API."""
+"""Unit tests for Vigilo CLI and top-level public API."""
 
 import io
 import sys
@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ojo import scan
-from ojo.cli import main
+from vigilo import scan
+from vigilo.cli import main
 
 
 class TestCLI(unittest.TestCase):
@@ -106,7 +106,7 @@ class TestCLI(unittest.TestCase):
 
             findings = scan(tmp_path)
             self.assertEqual(len(findings), 1)
-            self.assertEqual(findings[0].detector.id, "OJO-003")
+            self.assertEqual(findings[0].detector.id, "VIGILO-003")
 
 
 if __name__ == "__main__":

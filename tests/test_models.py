@@ -1,9 +1,9 @@
-"""Unit tests for OJO core data models."""
+"""Unit tests for Vigilo core data models."""
 
-import unittest
 from pathlib import Path
+import unittest
 
-from ojo.models import DetectorMeta, Finding, Location, Severity
+from vigilo.models import DetectorMeta, Finding, Location, Severity
 
 
 class TestModels(unittest.TestCase):
@@ -32,19 +32,19 @@ class TestModels(unittest.TestCase):
 
     def test_detector_meta(self) -> None:
         meta = DetectorMeta(
-            id="OJO-001",
+            id="VIGILO-001",
             name="SQL Injection",
             cwe=89,
             description="Detects SQL injection vulnerabilities",
             severity=Severity.HIGH,
         )
-        self.assertEqual(meta.id, "OJO-001")
+        self.assertEqual(meta.id, "VIGILO-001")
         self.assertEqual(meta.cwe, 89)
         self.assertEqual(meta.severity, Severity.HIGH)
 
     def test_finding_immutability(self) -> None:
         meta = DetectorMeta(
-            id="OJO-001",
+            id="VIGILO-001",
             name="SQL Injection",
             cwe=89,
             description="SQL Injection",
@@ -61,7 +61,7 @@ class TestModels(unittest.TestCase):
             source_line="db.execute(query)",
         )
 
-        self.assertEqual(finding.detector.id, "OJO-001")
+        self.assertEqual(finding.detector.id, "VIGILO-001")
         self.assertEqual(finding.location.line, 5)
         self.assertEqual(finding.source_line, "db.execute(query)")
 

@@ -1,17 +1,17 @@
-"""Unit tests for report formatters (Text & JSON)."""
+"""Unit tests for Vigilo report formatters (Text & JSON)."""
 
 import json
-import unittest
 from pathlib import Path
+import unittest
 
-from ojo.models import DetectorMeta, Finding, Location, Severity
-from ojo.reporter import format_json_report, format_report, format_text_report
+from vigilo.models import DetectorMeta, Finding, Location, Severity
+from vigilo.reporter import format_json_report, format_report, format_text_report
 
 
 class TestReporter(unittest.TestCase):
     def setUp(self) -> None:
         self.meta = DetectorMeta(
-            id="OJO-001",
+            id="VIGILO-001",
             name="SQL Injection",
             cwe=89,
             description="SQL Injection",
@@ -35,7 +35,7 @@ class TestReporter(unittest.TestCase):
         report = format_text_report([self.finding], use_color=False)
         self.assertIn("app.py:10:4", report)
         self.assertIn("HIGH", report)
-        self.assertIn("OJO-001 SQL Injection (CWE-89)", report)
+        self.assertIn("VIGILO-001 SQL Injection (CWE-89)", report)
         self.assertIn("Fix: Use parameterized query", report)
         self.assertIn("1 vulnerabilities found (1 high, 0 medium, 0 low)", report)
 
@@ -47,7 +47,7 @@ class TestReporter(unittest.TestCase):
         self.assertEqual(data["summary"]["total"], 1)
         self.assertEqual(data["summary"]["high"], 1)
         self.assertEqual(len(data["findings"]), 1)
-        self.assertEqual(data["findings"][0]["id"], "OJO-001")
+        self.assertEqual(data["findings"][0]["id"], "VIGILO-001")
         self.assertEqual(data["findings"][0]["location"]["line"], 10)
 
     def test_format_report_dispatch(self) -> None:

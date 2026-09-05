@@ -1,10 +1,10 @@
-"""Unit tests for OS Command Injection detector (OJO-002 / CWE-78)."""
+"""Unit tests for OS Command Injection detector (VIGILO-002 / CWE-78)."""
 
 import ast
 import unittest
 from pathlib import Path
 
-from ojo.detectors.command_injection import CommandInjectionDetector
+from vigilo.detectors.command_injection import CommandInjectionDetector
 
 
 class TestCommandInjectionDetector(unittest.TestCase):
@@ -24,7 +24,7 @@ def ping(host):
 """
         findings = self._scan(code)
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0].detector.id, "OJO-002")
+        self.assertEqual(findings[0].detector.id, "VIGILO-002")
 
     def test_os_popen_dynamic_flagged(self) -> None:
         code = """

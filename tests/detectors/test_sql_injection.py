@@ -1,10 +1,10 @@
-"""Unit tests for SQL Injection detector (OJO-001 / CWE-89)."""
+"""Unit tests for SQL Injection detector (VIGILO-001 / CWE-89)."""
 
 import ast
 import unittest
 from pathlib import Path
 
-from ojo.detectors.sql_injection import SQLInjectionDetector
+from vigilo.detectors.sql_injection import SQLInjectionDetector
 
 
 class TestSQLInjectionDetector(unittest.TestCase):
@@ -22,7 +22,7 @@ def get_user(user_id):
 """
         findings = self._scan(code)
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0].detector.id, "OJO-001")
+        self.assertEqual(findings[0].detector.id, "VIGILO-001")
         self.assertEqual(findings[0].location.line, 3)
 
     def test_concat_sql_injection(self) -> None:
@@ -32,7 +32,7 @@ def search(query):
 """
         findings = self._scan(code)
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0].detector.id, "OJO-001")
+        self.assertEqual(findings[0].detector.id, "VIGILO-001")
 
     def test_percent_formatting_sql_injection(self) -> None:
         code = """

@@ -1,12 +1,12 @@
-"""Edge-case tests for OJO scanner resilience and error tolerance."""
+"""Edge-case tests for Vigilo scanner resilience and error tolerance."""
 
 import os
 import tempfile
 import unittest
 from pathlib import Path
 
-from ojo import scan
-from ojo.scanner import ScanConfig, Scanner
+from vigilo import scan
+from vigilo.scanner import ScanConfig, Scanner
 
 
 class TestEdgeCases(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestEdgeCases(unittest.TestCase):
             # Scanner should skip broken.py and still detect valid_vuln.py
             findings = scan(tmp)
             self.assertEqual(len(findings), 1)
-            self.assertEqual(findings[0].detector.id, "OJO-003")
+            self.assertEqual(findings[0].detector.id, "VIGILO-003")
 
     def test_latin1_encoding_handling(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -46,7 +46,7 @@ class TestEdgeCases(unittest.TestCase):
 
             findings = scan(tmp)
             self.assertEqual(len(findings), 1)
-            self.assertEqual(findings[0].detector.id, "OJO-003")
+            self.assertEqual(findings[0].detector.id, "VIGILO-003")
 
     def test_large_file_stress_test(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -61,7 +61,7 @@ class TestEdgeCases(unittest.TestCase):
 
             findings = scan(tmp)
             self.assertEqual(len(findings), 1)
-            self.assertEqual(findings[0].detector.id, "OJO-001")
+            self.assertEqual(findings[0].detector.id, "VIGILO-001")
 
     def test_comments_and_docstrings_only(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

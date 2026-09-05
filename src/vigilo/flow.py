@@ -1,4 +1,4 @@
-"""Lightweight local data flow and AST analysis utilities for OJO."""
+"""Lightweight local data flow and AST analysis utilities for Vigilo."""
 
 from __future__ import annotations
 

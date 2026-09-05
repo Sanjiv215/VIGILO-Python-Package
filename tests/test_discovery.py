@@ -1,10 +1,10 @@
 """Unit tests for file discovery and exclusion logic."""
 
+from pathlib import Path
 import tempfile
 import unittest
-from pathlib import Path
 
-from ojo.discovery import discover_files, should_exclude
+from vigilo.discovery import discover_files, should_exclude
 
 
 class TestDiscovery(unittest.TestCase):
@@ -47,7 +47,7 @@ class TestDiscovery(unittest.TestCase):
 
     def test_discover_non_existent_file(self) -> None:
         with self.assertRaises(FileNotFoundError):
-            discover_files(Path("/non/existent/path/for/ojo/testing"))
+            discover_files(Path("/non/existent/path/for/vigilo/testing"))
 
 
 if __name__ == "__main__":

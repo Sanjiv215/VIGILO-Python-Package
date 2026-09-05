@@ -1,4 +1,4 @@
-"""Core data models for OJO."""
+"""Core data models for Vigilo."""
 
 from __future__ import annotations
 
@@ -75,7 +75,7 @@ class Location:
 class DetectorMeta:
     """Identity, classification, and metadata for a detector."""
 
-    id: str  # e.g., "OJO-001"
+    id: str  # e.g., "VIGILO-001"
     name: str  # e.g., "SQL Injection"
     cwe: int  # e.g., 89
     description: str

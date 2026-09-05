@@ -1,4 +1,4 @@
-"""Base classes and interfaces for vulnerability detectors in OJO."""
+"""Base classes and interfaces for vulnerability detectors in Vigilo."""
 
 from __future__ import annotations
 
@@ -6,11 +6,11 @@ import ast
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from ojo.models import DetectorMeta, Finding, Location, Severity
+from vigilo.models import DetectorMeta, Finding, Location, Severity
 
 
 class BaseDetector(ABC):
-    """Abstract base class for all OJO vulnerability detectors."""
+    """Abstract base class for all Vigilo vulnerability detectors."""
 
     meta: DetectorMeta
 

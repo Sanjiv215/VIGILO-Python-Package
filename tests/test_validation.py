@@ -1,4 +1,4 @@
-"""Benchmark and real-world validation test suite for OJO.
+"""Benchmark and real-world validation test suite for Vigilo.
 
 Evaluates True Positives, False Positives, Precision, and Recall on
 realistic multi-module Python application code.
@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ojo import scan
+from vigilo import scan
 
 
 class TestRealWorldValidation(unittest.TestCase):

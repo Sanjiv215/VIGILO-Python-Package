@@ -1,10 +1,10 @@
-"""Unit tests for Path Traversal detector (OJO-005 / CWE-22)."""
+"""Unit tests for Path Traversal detector (VIGILO-005 / CWE-22)."""
 
 import ast
 import unittest
 from pathlib import Path
 
-from ojo.detectors.path_traversal import PathTraversalDetector
+from vigilo.detectors.path_traversal import PathTraversalDetector
 
 
 class TestPathTraversalDetector(unittest.TestCase):
@@ -23,7 +23,7 @@ def read_file(filename):
 """
         findings = self._scan(code)
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0].detector.id, "OJO-005")
+        self.assertEqual(findings[0].detector.id, "VIGILO-005")
 
     def test_os_open_dynamic_path_flagged(self) -> None:
         code = """

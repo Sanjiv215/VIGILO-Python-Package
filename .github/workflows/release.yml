@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/ojo-scan
+      url: https://pypi.org/p/vigilo
     permissions:
       id-token: write
 
@@ -68,13 +68,13 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            bin_name: ojo-linux-x86_64
+            bin_name: vigilo-linux-x86_64
             ext: ""
           - os: macos-latest
-            bin_name: ojo-macos
+            bin_name: vigilo-macos
             ext: ""
           - os: windows-latest
-            bin_name: ojo-windows-x86_64
+            bin_name: vigilo-windows-x86_64
             ext: ".exe"
 
     steps:
@@ -92,13 +92,13 @@ jobs:
 
       - name: Build binary with PyInstaller
         run: |
-          pyinstaller --onefile --clean --name ojo src/ojo/cli.py
+          pyinstaller --onefile --clean --name vigilo src/vigilo/cli.py
 
       - name: Rename and move binary (Unix)
         if: runner.os != 'Windows'
         run: |
           mkdir -p bin_dist
-          mv dist/ojo bin_dist/${{ matrix.bin_name }}${{ matrix.ext }}
+          mv dist/vigilo bin_dist/${{ matrix.bin_name }}${{ matrix.ext }}
           chmod +x bin_dist/${{ matrix.bin_name }}${{ matrix.ext }}
 
       - name: Rename and move binary (Windows)
@@ -106,7 +106,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p bin_dist
-          mv dist/ojo.exe bin_dist/${{ matrix.bin_name }}${{ matrix.ext }}
+          mv dist/vigilo.exe bin_dist/${{ matrix.bin_name }}${{ matrix.ext }}
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v4

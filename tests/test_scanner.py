@@ -1,13 +1,13 @@
-"""Unit tests for scanner orchestrator."""
+"""Unit tests for Vigilo scanner orchestrator."""
 
 import ast
+from pathlib import Path
 import tempfile
 import unittest
-from pathlib import Path
 
-from ojo.detectors.base import BaseDetector
-from ojo.models import DetectorMeta, Finding, Severity
-from ojo.scanner import ScanConfig, Scanner
+from vigilo.detectors.base import BaseDetector
+from vigilo.models import DetectorMeta, Finding, Severity
+from vigilo.scanner import ScanConfig, Scanner
 
 
 class DummyDetector(BaseDetector):

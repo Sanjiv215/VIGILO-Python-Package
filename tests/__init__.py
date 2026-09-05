@@ -1,1 +1,1 @@
-"""Tests for OJO."""
+"""Tests for Vigilo."""

@@ -1,12 +1,12 @@
-"""OJO — A static, security-focused code scanner for Python."""
+"""Vigilo — A static, security-focused code scanner for Python."""
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
 
-from ojo.models import DetectorMeta, Finding, Location, Severity
-from ojo.scanner import ScanConfig, Scanner
+from vigilo.models import DetectorMeta, Finding, Location, Severity
+from vigilo.scanner import ScanConfig, Scanner
 
 __version__ = "0.1.0"
 

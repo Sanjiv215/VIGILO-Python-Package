@@ -10,7 +10,7 @@
 
 ## Reporting a Vulnerability
 
-Security is paramount to OJO. If you discover a security vulnerability within OJO or its scanning pipeline, please follow responsible disclosure practices:
+Security is paramount to Vigilo. If you discover a security vulnerability within Vigilo or its scanning pipeline, please follow responsible disclosure practices:
 
 1. **Do not open a public GitHub issue.**
 2. Send a detailed report via private vulnerability report on GitHub or email to **sanjiv215@users.noreply.github.com**.

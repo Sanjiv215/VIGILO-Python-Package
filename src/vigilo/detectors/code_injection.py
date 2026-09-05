@@ -1,13 +1,13 @@
-"""Detector for Code Injection vulnerabilities (CWE-94 / OJO-003)."""
+"""Detector for Code Injection vulnerabilities (CWE-94 / VIGILO-003)."""
 
 from __future__ import annotations
 
 import ast
 from pathlib import Path
 
-from ojo.detectors.base import BaseDetector
-from ojo.flow import FlowAnalyzer
-from ojo.models import DetectorMeta, Finding, Severity
+from vigilo.detectors.base import BaseDetector
+from vigilo.flow import FlowAnalyzer
+from vigilo.models import DetectorMeta, Finding, Severity
 
 CODE_EXEC_FUNCTIONS = {"eval", "exec", "compile"}
 
@@ -16,7 +16,7 @@ class CodeInjectionDetector(BaseDetector):
     """Detects dangerous evaluation or execution of dynamically constructed code."""
 
     meta = DetectorMeta(
-        id="OJO-003",
+        id="VIGILO-003",
         name="Code Injection",
         cwe=94,
         description="Detects dynamic expressions passed to eval(), exec(), or compile()",

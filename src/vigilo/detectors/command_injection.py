@@ -1,13 +1,13 @@
-"""Detector for OS Command Injection vulnerabilities (CWE-78 / OJO-002)."""
+"""Detector for OS Command Injection vulnerabilities (CWE-78 / VIGILO-002)."""
 
 from __future__ import annotations
 
 import ast
 from pathlib import Path
 
-from ojo.detectors.base import BaseDetector
-from ojo.flow import FlowAnalyzer
-from ojo.models import DetectorMeta, Finding, Severity
+from vigilo.detectors.base import BaseDetector
+from vigilo.flow import FlowAnalyzer
+from vigilo.models import DetectorMeta, Finding, Severity
 
 SUBPROCESS_METHODS = {
     "run",
@@ -22,7 +22,7 @@ class CommandInjectionDetector(BaseDetector):
     """Detects dangerous OS command executions with dynamic or unsanitized input."""
 
     meta = DetectorMeta(
-        id="OJO-002",
+        id="VIGILO-002",
         name="OS Command Injection",
         cwe=78,
         description="Detects dynamic shell commands passed to execution functions",

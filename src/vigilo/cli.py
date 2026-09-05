@@ -1,4 +1,4 @@
-"""CLI entry point and command-line parser for OJO."""
+"""CLI entry point and command-line parser for Vigilo."""
 
 from __future__ import annotations
 
@@ -7,23 +7,23 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from ojo import __version__
-from ojo.models import Severity
-from ojo.reporter import format_report
-from ojo.scanner import ScanConfig, Scanner
+from vigilo import __version__
+from vigilo.models import Severity
+from vigilo.reporter import format_report
+from vigilo.scanner import ScanConfig, Scanner
 
 
 def build_parser() -> argparse.ArgumentParser:
     """Construct the command-line argument parser."""
     parser = argparse.ArgumentParser(
-        prog="ojo",
-        description="OJO — A static, security-focused code scanner for Python.",
+        prog="vigilo",
+        description="Vigilo — A static, security-focused code scanner for Python.",
     )
     parser.add_argument(
         "--version",
         "-V",
         action="version",
-        version=f"ojo {__version__}",
+        version=f"vigilo {__version__}",
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
@@ -70,13 +70,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Main execution entrypoint for OJO CLI."""
+    """Main execution entrypoint for Vigilo CLI."""
     if argv is None:
         argv = sys.argv[1:]
 
     args_list = list(argv)
 
-    # Normalize alias: `ojo <path>` -> `ojo scan <path>`
+    # Normalize alias: `vigilo <path>` -> `vigilo scan <path>`
     if not args_list:
         args_list = ["scan", "."]
     elif args_list[0] not in ("scan", "-h", "--help", "-V", "--version"):

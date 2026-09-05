@@ -3,18 +3,18 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ojo-scan"
+name = "vigilo"
 version = "0.1.0"
-description = "A static, security-focused code scanner that detects known vulnerability patterns in Python codebases."
+description = "A fast, zero-configuration static security scanner that detects known vulnerability patterns in Python codebases."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
-    { name = "Sanjiv Prasad" }
+    { name = "Sanjiv" }
 ]
-keywords = ["security", "sast", "vulnerability-scanner", "static-analysis", "cwe", "security-tools"]
+keywords = ["security", "sast", "vulnerability-scanner", "static-analysis", "cwe", "security-tools", "vigilo"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: Security",
     "Topic :: Software Development :: Quality Assurance",
@@ -35,10 +35,10 @@ dev = [
 ]
 
 [project.scripts]
-ojo = "ojo.cli:main"
+vigilo = "vigilo.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ojo"]
+packages = ["src/vigilo"]
 
 [tool.ruff]
 target-version = "py310"
@@ -50,7 +50,6 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "B017"]
-
 
 [tool.mypy]
 python_version = "3.10"

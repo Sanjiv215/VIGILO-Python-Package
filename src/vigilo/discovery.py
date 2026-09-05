@@ -1,4 +1,4 @@
-"""File discovery and filtering utilities for OJO."""
+"""File discovery and filtering utilities for Vigilo."""
 
 from __future__ import annotations
 
