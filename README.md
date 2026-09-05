@@ -2,9 +2,12 @@
 
 [![CI](https://github.com/Sanjiv215/OJO-Python-Package/actions/workflows/ci.yml/badge.svg)](https://github.com/Sanjiv215/OJO-Python-Package/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PyPI version](https://img.shields.io/badge/pypi-ojo--scan-blue.svg)](https://pypi.org/project/ojo-scan/)
 
-**OJO** is a fast, zero-configuration static security scanner for Python. It identifies exploitable vulnerability patterns (CWEs) in first-party code using AST traversal combined with local data-flow analysis to minimize false positives.
+**OJO** is a fast, zero-configuration static security scanner for Python. It detects exploitable vulnerability patterns (CWEs) in first-party code using AST traversal combined with local data-flow analysis to minimize false positives.
+
+Runs across **Linux**, **macOS**, and **Windows** — either via `pip` or as a standalone binary with **no Python installation required**.
 
 ---
 
@@ -12,36 +15,55 @@
 
 - **High-Signal over High-Noise:** Traditional linters (like Bandit) flag safe string constants and standard library calls indiscriminately. OJO uses local data-flow analysis to distinguish harmless constants from untrusted dynamic inputs.
 - **Zero Configuration:** Drop it directly into your workflow or CI pipeline with `ojo scan .`. No YAML rule authoring or database setup required.
-- **Zero Runtime Dependencies:** Uses only Python's standard library. Lightweight and instantaneous.
-- **First-Party Code Focus:** While tools like `pip-audit` scan your dependencies for CVEs, OJO scans *your* code for logic and injection vulnerabilities.
+- **Zero Runtime Dependencies:** Built strictly on Python's standard library. Lightweight and instantaneous.
+- **First-Party Code Focus:** While tools like `pip-audit` scan third-party dependencies for CVEs, OJO scans *your* code for logic and injection flaws.
 
 ---
 
-## Quickstart
+## Installation & Quickstart
 
-### Installation
-
-Install via PyPI:
+### Option A: Install via PyPI (Python 3.10+)
 
 ```bash
 pip install ojo-scan
 ```
 
-### CLI Usage
+### Option B: Standalone Executable (No Python Required)
+
+Pre-built standalone single-file executables are available for Linux, macOS, and Windows on the [Releases Page](https://github.com/Sanjiv215/OJO-Python-Package/releases):
+
+- **Linux (x86_64):** `ojo-linux-x86_64`
+- **macOS:** `ojo-macos`
+- **Windows (x86_64):** `ojo-windows-x86_64.exe`
+
+#### Verifying Checksums
+
+Every release includes a `SHA256SUMS.txt` file to verify binary integrity:
+
+```bash
+# Verify checksum on Linux/macOS
+sha256sum -c SHA256SUMS.txt
+```
+
+> **Note on Antivirus Alerts:** Standalone executables are bundled with PyInstaller. Some heuristic antivirus engines or Windows SmartScreen may occasionally flag newly published PyInstaller binaries as unfamiliar. This is a known false positive with packed binaries. You can verify the integrity using the SHA256 checksum or install via `pip install ojo-scan` to run from source.
+
+---
+
+## Usage
 
 Scan the current directory:
+
+```bash
+ojo scan .
+```
+
+Or use the shortcut alias:
 
 ```bash
 ojo .
 ```
 
-Or use the canonical command:
-
-```bash
-ojo scan src/
-```
-
-Generate structured JSON output for CI pipelines:
+Generate structured JSON output for CI/CD pipelines:
 
 ```bash
 ojo scan . --format json
@@ -64,7 +86,6 @@ ojo scan . --exclude "tests/*" --exclude "migrations/*"
 ```python
 from ojo import scan
 
-# Run a scan on a path
 findings = scan("src/")
 
 for finding in findings:
@@ -121,4 +142,4 @@ We welcome contributions! Please review our [Contributing Guide](CONTRIBUTING.md
 
 ## License
 
-Released under the [MIT License](LICENSE).
+Distributed under the [MIT License](LICENSE). Copyright (c) 2026 Sanjiv.

@@ -8,9 +8,12 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: Test on ${{ matrix.os }} (Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
@@ -35,6 +38,6 @@ jobs:
         run: |
           mypy src
 
-      - name: Run tests with pytest
+      - name: Run test suite
         run: |
-          pytest
+          python -m unittest discover -s tests

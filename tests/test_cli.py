@@ -59,6 +59,18 @@ class TestCLI(unittest.TestCase):
             self.assertEqual(code, 1)
             self.assertIn("Code Injection", out.getvalue())
 
+    def test_cli_bare_scan_command(self) -> None:
+        out = io.StringIO()
+        old_stdout = sys.stdout
+        try:
+            sys.stdout = out
+            code = main(["scan", "--no-color"])
+        finally:
+            sys.stdout = old_stdout
+
+        # Should scan current working directory without crashing
+        self.assertIn(code, (0, 1))
+
     def test_cli_json_format(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
