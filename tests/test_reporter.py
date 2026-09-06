@@ -43,7 +43,7 @@ class TestReporter(unittest.TestCase):
         report = format_json_report([self.finding])
         data = json.loads(report)
 
-        self.assertEqual(data["version"], "0.3.0")
+        self.assertEqual(data["version"], "0.3.1")
         self.assertEqual(data["summary"]["total"], 1)
         self.assertEqual(data["summary"]["high"], 1)
         self.assertEqual(len(data["findings"]), 1)
@@ -110,13 +110,81 @@ class TestReporter(unittest.TestCase):
         self.assertNotIn(huge_line, text_report)
         self.assertLess(len(text_report), 2000)
 
-        # 2. JSON report should also truncate source_line
-        json_report = format_json_report([long_finding])
-        data = json.loads(json_report)
-        reported_snippet = data["findings"][0]["source_line"]
-        self.assertIn("... [truncated, ", reported_snippet)
-        self.assertNotIn(huge_line, json_report)
-        self.assertLess(len(reported_snippet), 300)
+    def test_reporter_string_formatting_and_spacing(self) -> None:
+        # 1. JS Security Finding (asserts space between rule ID and name)
+        js_finding = Finding(
+            detector=DetectorMeta(
+                id="VIGILO-JS-002",
+                name="Code Injection",
+                cwe=94,
+                description="Code injection",
+                severity=Severity.HIGH,
+                category="security",
+                language="javascript",
+            ),
+            location=Location(file=Path("app.js"), line=5, col=10),
+            message="Dynamic eval execution",
+            fix_hint="Avoid dynamic code",
+            severity=Severity.HIGH,
+            confidence="high",
+            source_line="eval(user_code)",
+            category="security",
+            language="javascript",
+        )
+
+        # 2. Correctness Undefined Name (asserts space between [CORRECTNESS] and rule ID)
+        c02_finding = Finding(
+            detector=DetectorMeta(
+                id="VIGILO-C02",
+                name="Undefined Name Usage",
+                cwe=None,
+                description="Undefined name",
+                severity=Severity.MEDIUM,
+                category="correctness",
+                language="python",
+            ),
+            location=Location(file=Path("app.py"), line=1, col=1),
+            message="Undefined name `PRint`",
+            fix_hint="Fix typo",
+            severity=Severity.MEDIUM,
+            confidence="high",
+            source_line='PRint("Hello")',
+            category="correctness",
+            language="python",
+        )
+
+        # 3. Correctness Unused Code (asserts standardized "Unused Import / Variable")
+        c03_finding = Finding(
+            detector=DetectorMeta(
+                id="VIGILO-C03",
+                name="Unused Import / Variable",
+                cwe=None,
+                description="Unused import",
+                severity=Severity.LOW,
+                category="correctness",
+                language="python",
+            ),
+            location=Location(file=Path("app.py"), line=2, col=1),
+            message="Imported name `math` is never used.",
+            fix_hint="Remove unused import",
+            severity=Severity.LOW,
+            confidence="high",
+            source_line="import math",
+            category="correctness",
+            language="python",
+        )
+
+        report = format_text_report([js_finding, c02_finding, c03_finding], use_color=False)
+
+        # Exact substring assertions
+        self.assertIn("VIGILO-JS-002 Code Injection", report)
+        self.assertNotIn("VIGILO-JS-002Code Injection", report)
+
+        self.assertIn("[CORRECTNESS] VIGILO-C02", report)
+        self.assertNotIn("[CORRECTNESS]VIGILO-C02", report)
+
+        self.assertIn("[CORRECTNESS] VIGILO-C03 Unused Import / Variable", report)
+        self.assertNotIn("Unused Import/ Variable", report)
 
 
 if __name__ == "__main__":

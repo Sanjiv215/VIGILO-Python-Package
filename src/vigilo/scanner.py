@@ -18,7 +18,7 @@ from vigilo.detectors import (
 from vigilo.detectors.syntax_error import SyntaxErrorDetector
 from vigilo.discovery import discover_files, get_file_language
 from vigilo.models import Finding, Severity
-from vigilo.parsers.js_parser import parse_js_ts
+from vigilo.parsers.js_parser import get_node_text, parse_js_ts, walk_tree
 
 
 @dataclass
@@ -118,10 +118,54 @@ class Scanner:
             return []
 
         tree, source_str, raw_bytes, error = parse_js_ts(source_bytes, file_path)
+        lang = get_file_language(file_path)
+
+        syntax_detector = next(
+            (d for d in self.py_detectors if isinstance(d, SyntaxErrorDetector)), None
+        )
+
+        # 1. Total parse failure (tree is None)
         if tree is None:
+            if syntax_detector is not None:
+                err_msg = error or "Failed to parse JS/TS syntax tree"
+                return [
+                    syntax_detector.check_js_syntax_error(
+                        file_path=file_path,
+                        source=source_str,
+                        error_msg=err_msg,
+                        line=1,
+                        col=1,
+                        language=lang,
+                    )
+                ]
             return []
 
         findings: list[Finding] = []
+
+        # 2. Syntax / structural parse errors detected by Tree-Sitter
+        if tree.root_node.has_error and syntax_detector is not None:
+            for node in walk_tree(tree.root_node):
+                if node.type == "ERROR" or node.is_missing:
+                    err_line = node.start_point.row + 1
+                    err_col = node.start_point.column + 1
+                    err_txt = get_node_text(node, raw_bytes).strip()
+                    err_desc = (
+                        f"unexpected or malformed syntax near '{err_txt}'"
+                        if err_txt
+                        else "malformed syntax"
+                    )
+                    findings.append(
+                        syntax_detector.check_js_syntax_error(
+                            file_path=file_path,
+                            source=source_str,
+                            error_msg=err_desc,
+                            line=err_line,
+                            col=err_col,
+                            language=lang,
+                        )
+                    )
+                    break
+
         for detector in self.js_detectors:
             try:
                 results = detector.run(tree, file_path, source_str, raw_bytes)

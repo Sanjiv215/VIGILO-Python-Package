@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.1] - 2026-09-06
+
+### Fixed
+- **JS/TS Parse & Syntax Error Reporting:**
+  - Resolved silently-discarded parse failures in `scan_js_file()` by actively surfacing Tree-Sitter syntax errors and unparseable source files as `VIGILO-C01` (`Syntax & Indentation Error`) findings rather than skipping the file.
+  - Added test fixtures (`js_syntax_malformed.ts`, `jsx_syntax_unclosed.tsx`) and verified syntax error reporting across all supported file extensions.
+- **Reporter Formatting & Spacing Inconsistencies:**
+  - Standardized CLI text reporter formatting to guarantee consistent spacing: `VIGILO-JS-002 Code Injection` and `[CORRECTNESS] VIGILO-C02`.
+  - Standardized rule `VIGILO-C03` detector metadata name to `"Unused Import / Variable"` across all modules and tests.
+
+---
+
 ## [0.3.0] - 2026-09-06
 
 ### Added

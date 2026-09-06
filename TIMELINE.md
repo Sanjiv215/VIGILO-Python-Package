@@ -23,3 +23,4 @@ This timeline is constructed directly from repository git commit history and rel
 | **2026-09-05 20:10:28** | `932f71a` | **Release v0.2.2** | 20-technique security audit fixes, ANSI injection sanitization, cycle protection, strict mypy. |
 | **2026-09-05 20:17:54** | `dbc9ae4` | CI Hardening | Wired `pip-audit --local` and strict security gates into CI. |
 | **2026-09-06 10:19:00** | `0a5e6e0` / `v0.3.0` | **Release v0.3.0** | JavaScript, TypeScript, React support via Tree-Sitter (`VIGILO-JS-001` to `VIGILO-JS-005`), ADR docs, `--mode` flag, bounded reporter snippets. |
+| **2026-09-06 10:55:00** | `v0.3.1` | **Release v0.3.1** | Surfaced JS/TS parse/syntax errors as `VIGILO-C01`, fixed reporter spacing bugs, standardized rule names. |

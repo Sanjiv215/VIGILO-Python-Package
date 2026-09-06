@@ -138,3 +138,19 @@ class TestJSScannerIntegration:
         scanner = Scanner(ScanConfig(paths=[JS_CLEAN_DIR]))
         findings = scanner.scan()
         assert len(findings) == 0, f"Unexpected false positives: {[f.message for f in findings]}"
+
+    def test_malformed_js_ts_surfaces_syntax_error_not_silently_skipped(self) -> None:
+        malformed_ts = FIXTURES_DIR / "diagnostics" / "js_syntax_malformed.ts"
+        unclosed_tsx = FIXTURES_DIR / "diagnostics" / "jsx_syntax_unclosed.tsx"
+
+        scanner = Scanner(ScanConfig(paths=[malformed_ts, unclosed_tsx]))
+        findings = scanner.scan()
+
+        # Both malformed files must produce visible findings
+        assert len(findings) == 2
+        for f in findings:
+            assert f.detector.id == "VIGILO-C01"
+            assert f.category == "correctness"
+            assert "Syntax error" in f.message
+            assert f.language == "typescript"
+            assert f.location.line >= 1

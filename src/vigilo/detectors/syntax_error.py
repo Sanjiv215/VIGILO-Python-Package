@@ -57,4 +57,54 @@ class SyntaxErrorDetector(BaseDetector):
             confidence="high",
             source_line=source_line,
             category=self.meta.category,
+            language="python",
+        )
+
+    def check_js_syntax_error(
+        self,
+        file_path: Path,
+        source: str,
+        error_msg: str = "",
+        line: int = 1,
+        col: int = 1,
+        language: str = "javascript",
+    ) -> Finding:
+        """Create a Finding from a JavaScript or TypeScript syntax/parse error."""
+        source_lines = source.splitlines()
+        source_line = ""
+        if 1 <= line <= len(source_lines):
+            source_line = source_lines[line - 1]
+
+        location = Location(
+            file=file_path,
+            line=line,
+            col=col,
+        )
+
+        if error_msg:
+            msg = f"Syntax error: {error_msg}"
+        else:
+            msg = "Syntax error: invalid or unexpected token"
+        fix_hint = f"Fix JavaScript/TypeScript syntax error at line {line}."
+
+        meta = DetectorMeta(
+            id=self.meta.id,
+            name=self.meta.name,
+            cwe=self.meta.cwe,
+            description="Detects syntax, indentation, and structural parsing errors.",
+            severity=self.meta.severity,
+            category=self.meta.category,
+            language=language,
+        )
+
+        return Finding(
+            detector=meta,
+            location=location,
+            message=msg,
+            fix_hint=fix_hint,
+            severity=self.meta.severity,
+            confidence="high",
+            source_line=source_line,
+            category=self.meta.category,
+            language=language,
         )
