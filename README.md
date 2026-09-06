@@ -81,24 +81,33 @@ Generate structured JSON output for CI/CD pipelines:
 vigilo scan . --format json
 ```
 
+Filter by scan mode (security only, correctness diagnostics only, or all):
+
+```bash
+# Security scan only (skips correctness diagnostics)
+vigilo scan . --security-only
+# or:
+vigilo scan . --mode security
+
+# Correctness diagnostics only (syntax errors, undefined names, unclosed resources)
+vigilo scan . --mode correctness
+# or use the dedicated diagnose subcommand:
+vigilo diagnose .
+
+# All checks: Security + Correctness (Default)
+vigilo scan .
+```
+
 Filter by minimum severity:
 
 ```bash
 vigilo scan . --min-severity high
 ```
 
-Include code correctness diagnostics (syntax errors, undefined names, unclosed resources):
-
-```bash
-vigilo scan . --correctness
-# or run the dedicated diagnose subcommand:
-vigilo diagnose .
-```
-
 Exclude specific directories or glob patterns:
 
 ```bash
-vigilo scan . --exclude "tests/*" --exclude "migrations/*"
+vigilo scan . --exclude "tests/*" --exclude "node_modules/*" --exclude "dist/*"
 ```
 
 ### Python API
@@ -144,7 +153,7 @@ for finding in findings:
 | **`VIGILO-JS-004`** | CWE-1321 | Prototype Pollution | `HIGH` | `__proto__`, `constructor.prototype` direct mutation, unsafe deep merge |
 | **`VIGILO-JS-005`** | CWE-798 | Hardcoded Secrets & Credentials | `HIGH` | AWS keys, GitHub PATs, Slack tokens, JWTs, DB connection strings |
 
-### Python Code Correctness Diagnostics (Opt-In with `--correctness` or `diagnose`)
+### Python Code Correctness Diagnostics (Included in Default Scan or `diagnose`)
 
 | ID | Issue | Severity | Description |
 |---|---|---|---|
@@ -154,29 +163,33 @@ for finding in findings:
 | **`VIGILO-C04`** | Unclosed File Resource | `MEDIUM` | Raw `open()` call without context manager (`with`) |
 | **`VIGILO-C05`** | Bare Except Clause | `MEDIUM` | Blanket `except:` catch masking critical errors |
 
-
 ---
 
 ## CLI Reference
 
 ```
-usage: vigilo [-h] [--version] {scan,diagnose} ... [target] [--format {text,json}]
-              [--min-severity {low,medium,high}] [--exclude EXCLUDE] [--correctness]
-              [--no-color]
+usage: vigilo scan [-h] [--format {text,json}]
+                   [--min-severity {low,medium,high}] [--exclude EXCLUDE]
+                   [--no-color] [--mode {all,security,correctness}]
+                   [--security-only]
+                   [target]
 
-Commands:
-  scan                  Scan target directory or file for security vulnerabilities
-  diagnose              Run code correctness diagnostics (syntax, undefined names, resources)
+positional arguments:
+  target                Path to directory or file to scan (default: '.')
 
-Options:
-  target                Directory or file to scan (default: '.')
-  --format, -f          Output report format: 'text' or 'json' (default: 'text')
-  --min-severity, -s    Minimum severity threshold: 'low', 'medium', 'high' (default: 'low')
-  --correctness, -c     Include code correctness diagnostics alongside security checks
-  --exclude, -e         Exclude path matching glob pattern (repeatable)
-  --no-color            Disable ANSI terminal coloring
-  --version, -V         Show version and exit
-  --help, -h            Show help and exit
+options:
+  -h, --help            show this help message and exit
+  --format, -f {text,json}
+                        Output report format (default: 'text')
+  --min-severity, -s {low,medium,high}
+                        Minimum severity threshold to report (default: 'low')
+  --exclude, -e EXCLUDE
+                        Exclude files/directories matching glob pattern (repeatable)
+  --no-color            Disable ANSI color codes in output
+  --mode, -m {all,security,correctness}
+                        Scan mode: 'all' (security + correctness), 'security'
+                        (security only), 'correctness' (diagnostics only) (default: all)
+  --security-only, -S   Shortcut for --mode security (only report security vulnerabilities)
 ```
 
 ### Exit Codes
@@ -186,6 +199,17 @@ Options:
 | `0` | Clean — no vulnerabilities found at or above `--min-severity` |
 | `1` | Vulnerabilities detected |
 | `2` | Execution or path error |
+
+---
+
+## Architecture & Project Documentation
+
+- [**DECISIONS.md**](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/DECISIONS.md) — Architecture Decision Records (ADRs) detailing package design, parser selection, and CLI ergonomics.
+- [**ROADMAP.md**](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/ROADMAP.md) — Supported and planned language roadmap (Python, JS, TS, React active; Java, HTML, CSS planned).
+- [**TECH_STACK.md**](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/TECH_STACK.md) — Detailed runtime and dev dependency matrix with justifications.
+- [**WORKFLOW.md**](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/WORKFLOW.md) — Development workflow, verification gates, and stage logs.
+- [**TIMELINE.md**](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/TIMELINE.md) — Historical milestone release logs and timestamps.
+- [**CHANGELOG.md**](https://github.com/Sanjiv215/VIGILO-Python-Package/blob/main/CHANGELOG.md) — Detailed version history adhering to Keep a Changelog.
 
 ---
 
