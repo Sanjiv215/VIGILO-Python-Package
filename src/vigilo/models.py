@@ -75,12 +75,13 @@ class Location:
 class DetectorMeta:
     """Identity, classification, and metadata for a detector."""
 
-    id: str  # e.g., "VIGILO-001" or "VIGILO-C01"
+    id: str  # e.g., "VIGILO-001", "VIGILO-C01", or "VIGILO-JS-001"
     name: str  # e.g., "SQL Injection"
     cwe: int | None  # e.g., 89 or None for correctness
     description: str
     severity: Severity
     category: str = "security"  # "security" or "correctness"
+    language: str = "python"  # "python", "javascript", "typescript"
 
 
 @dataclass(frozen=True)
@@ -95,3 +96,4 @@ class Finding:
     confidence: str = "high"  # "high", "medium", "low"
     source_line: str = ""
     category: str = "security"  # "security" or "correctness"
+    language: str = "python"  # "python", "javascript", "typescript"

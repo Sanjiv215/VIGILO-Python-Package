@@ -43,11 +43,12 @@ class TestReporter(unittest.TestCase):
         report = format_json_report([self.finding])
         data = json.loads(report)
 
-        self.assertEqual(data["version"], "0.2.2")
+        self.assertEqual(data["version"], "0.3.0")
         self.assertEqual(data["summary"]["total"], 1)
         self.assertEqual(data["summary"]["high"], 1)
         self.assertEqual(len(data["findings"]), 1)
         self.assertEqual(data["findings"][0]["id"], "VIGILO-001")
+        self.assertEqual(data["findings"][0]["language"], "python")
         self.assertEqual(data["findings"][0]["location"]["line"], 10)
 
     def test_format_report_dispatch(self) -> None:
@@ -89,6 +90,33 @@ class TestReporter(unittest.TestCase):
         data = json.loads(report_json)
         self.assertEqual(data["findings"][0]["location"]["file"], 'quote"file\\name\n.py')
         self.assertIn("quotes", data["findings"][0]["message"])
+
+    def test_long_snippet_truncation_text_and_json(self) -> None:
+        # Create a 30,000-character single line
+        huge_line = "eval(" + "nested(" * 3000 + "payload" + ")" * 3000 + ")"
+        long_finding = Finding(
+            detector=self.meta,
+            location=Location(file=Path("huge.py"), line=1, col=1),
+            message="Code Injection",
+            fix_hint="Avoid dynamic code",
+            severity=Severity.HIGH,
+            confidence="high",
+            source_line=huge_line,
+        )
+
+        # 1. Text report should truncate and not contain the full 30KB line
+        text_report = format_text_report([long_finding], use_color=False)
+        self.assertIn("... [truncated, ", text_report)
+        self.assertNotIn(huge_line, text_report)
+        self.assertLess(len(text_report), 2000)
+
+        # 2. JSON report should also truncate source_line
+        json_report = format_json_report([long_finding])
+        data = json.loads(json_report)
+        reported_snippet = data["findings"][0]["source_line"]
+        self.assertIn("... [truncated, ", reported_snippet)
+        self.assertNotIn(huge_line, json_report)
+        self.assertLess(len(reported_snippet), 300)
 
 
 if __name__ == "__main__":

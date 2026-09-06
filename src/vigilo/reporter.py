@@ -23,10 +23,20 @@ _ANSI_OR_CONTROL_RE = re.compile(
     r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]"
 )
 
+MAX_SNIPPET_LENGTH = 200
+
 
 def sanitize_terminal_text(text: str) -> str:
     """Sanitize text to prevent ANSI escape sequence injection and terminal manipulation."""
     return _ANSI_OR_CONTROL_RE.sub("", text)
+
+
+def truncate_snippet(text: str, max_length: int = MAX_SNIPPET_LENGTH) -> str:
+    """Truncate code snippet to max_length and append truncation indicator if exceeded."""
+    stripped = text.strip()
+    if len(stripped) > max_length:
+        return f"{stripped[:max_length]}... [truncated, {len(stripped)} chars total]"
+    return stripped
 
 
 def _severity_color(sev: Severity, use_color: bool) -> str:
@@ -78,7 +88,7 @@ def format_text_report(findings: Sequence[Finding], use_color: bool = True) -> s
 
         # Code snippet if present
         if finding.source_line:
-            clean_source = sanitize_terminal_text(finding.source_line.strip())
+            clean_source = sanitize_terminal_text(truncate_snippet(finding.source_line))
             lines.append(f"  {dim}│{reset}   {clean_source}")
 
         # Fix guidance
@@ -116,6 +126,7 @@ def format_json_report(findings: Sequence[Finding]) -> str:
                 "name": f.detector.name,
                 "cwe": f.detector.cwe,
                 "category": f.category,
+                "language": f.language,
                 "severity": f.severity.value,
                 "confidence": f.confidence,
                 "message": f.message,
@@ -127,7 +138,7 @@ def format_json_report(findings: Sequence[Finding]) -> str:
                     "end_line": f.location.end_line,
                     "end_col": f.location.end_col,
                 },
-                "source_line": f.source_line,
+                "source_line": truncate_snippet(sanitize_terminal_text(f.source_line)),
             }
             for f in findings
         ],

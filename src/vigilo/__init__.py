@@ -1,4 +1,4 @@
-"""Vigilo — A static, security-focused code scanner for Python."""
+"""Vigilo — Fast static security scanner for Python, JavaScript, and TypeScript."""
 
 from __future__ import annotations
 

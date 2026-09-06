@@ -85,7 +85,7 @@ class TestCLI(unittest.TestCase):
                 sys.stdout = old_stdout
 
             self.assertEqual(code, 0)
-            self.assertIn('"version": "0.2.2"', stdout_capture.getvalue())
+            self.assertIn('"version": "0.3.0"', stdout_capture.getvalue())
 
     def test_cli_non_existent_path(self) -> None:
         stderr_capture = io.StringIO()
@@ -98,6 +98,58 @@ class TestCLI(unittest.TestCase):
 
         self.assertEqual(code, 2)
         self.assertIn("Error: Target path does not exist", stderr_capture.getvalue())
+
+    def test_cli_mode_flags(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            # File with both security (eval) and correctness (undefined var)
+            payload = "def run(cmd):\n    eval(cmd)\n    print(typo_var)\n"
+            (tmp_path / "mixed.py").write_text(payload)
+
+            # 1. Mode: all (default) -> reports both
+            out_all = io.StringIO()
+            old_stdout = sys.stdout
+            try:
+                sys.stdout = out_all
+                code_all = main(["scan", str(tmp_path), "--no-color"])
+            finally:
+                sys.stdout = old_stdout
+            self.assertEqual(code_all, 1)
+            self.assertIn("VIGILO-003", out_all.getvalue())
+            self.assertIn("VIGILO-C02", out_all.getvalue())
+
+            # 2. Mode: security -> reports only security
+            out_sec = io.StringIO()
+            try:
+                sys.stdout = out_sec
+                code_sec = main(["scan", str(tmp_path), "--mode", "security", "--no-color"])
+            finally:
+                sys.stdout = old_stdout
+            self.assertEqual(code_sec, 1)
+            self.assertIn("VIGILO-003", out_sec.getvalue())
+            self.assertNotIn("VIGILO-C02", out_sec.getvalue())
+
+            # 3. Mode: correctness -> reports only correctness
+            out_corr = io.StringIO()
+            try:
+                sys.stdout = out_corr
+                code_corr = main(["scan", str(tmp_path), "-m", "correctness", "--no-color"])
+            finally:
+                sys.stdout = old_stdout
+            self.assertEqual(code_corr, 1)
+            self.assertNotIn("VIGILO-003", out_corr.getvalue())
+            self.assertIn("VIGILO-C02", out_corr.getvalue())
+
+            # 4. Shortcut: --security-only / -S
+            out_shortcut = io.StringIO()
+            try:
+                sys.stdout = out_shortcut
+                code_shortcut = main(["scan", str(tmp_path), "-S", "--no-color"])
+            finally:
+                sys.stdout = old_stdout
+            self.assertEqual(code_shortcut, 1)
+            self.assertIn("VIGILO-003", out_shortcut.getvalue())
+            self.assertNotIn("VIGILO-C02", out_shortcut.getvalue())
 
     def test_top_level_scan_api(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

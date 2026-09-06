@@ -29,6 +29,32 @@ DEFAULT_EXCLUDES: tuple[str, ...] = (
     "node_modules",
 )
 
+SUPPORTED_EXTENSIONS: tuple[str, ...] = (
+    ".py",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".cjs",
+    ".ts",
+    ".tsx",
+)
+
+PYTHON_EXTENSIONS: tuple[str, ...] = (".py",)
+JS_EXTENSIONS: tuple[str, ...] = (".js", ".jsx", ".mjs", ".cjs")
+TS_EXTENSIONS: tuple[str, ...] = (".ts", ".tsx")
+
+
+def get_file_language(file_path: Path) -> str:
+    """Return language identifier ('python', 'javascript', 'typescript') based on file extension."""
+    suffix = file_path.suffix.lower()
+    if suffix in PYTHON_EXTENSIONS:
+        return "python"
+    if suffix in TS_EXTENSIONS:
+        return "typescript"
+    if suffix in JS_EXTENSIONS:
+        return "javascript"
+    return "unknown"
+
 
 def should_exclude(path: Path, exclude_patterns: Sequence[str]) -> bool:
     """Check if a path matches any exclusion pattern.
@@ -57,25 +83,28 @@ def discover_files(
     target: Path | str,
     exclude_patterns: Sequence[str] | None = None,
     follow_symlinks: bool = False,
+    extensions: Sequence[str] | None = None,
 ) -> list[Path]:
-    """Discover all Python source files under target path.
+    """Discover all supported source files under target path.
 
     Args:
         target: A file or directory path to scan.
         exclude_patterns: Patterns to exclude (defaults to DEFAULT_EXCLUDES).
         follow_symlinks: Whether to follow symbolic links during traversal.
+        extensions: Allowed file extensions (defaults to SUPPORTED_EXTENSIONS).
 
     Returns:
-        Sorted list of resolved/normalized Python file paths.
+        Sorted list of resolved/normalized file paths.
     """
     target_path = Path(target)
     excludes = tuple(exclude_patterns) if exclude_patterns is not None else DEFAULT_EXCLUDES
+    allowed_exts = tuple(extensions) if extensions is not None else SUPPORTED_EXTENSIONS
 
     if not target_path.exists():
         raise FileNotFoundError(f"Target path does not exist: {target_path}")
 
     if target_path.is_file():
-        if target_path.suffix == ".py" and not should_exclude(target_path, excludes):
+        if target_path.suffix.lower() in allowed_exts and not should_exclude(target_path, excludes):
             return [target_path]
         return []
 
@@ -113,8 +142,8 @@ def discover_files(
             dirs[:] = [d for d in dirs if not should_exclude(root_path / d, excludes)]
 
         for file_name in files:
-            if file_name.endswith(".py"):
-                file_path = root_path / file_name
+            file_path = root_path / file_name
+            if file_path.suffix.lower() in allowed_exts:
                 # If follow_symlinks is False, do not follow file symlinks
                 if not follow_symlinks and file_path.is_symlink():
                     continue

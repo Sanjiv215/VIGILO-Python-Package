@@ -36,8 +36,3 @@ coverage.xml
 .DS_Store
 Thumbs.db
 
-# Internal dev tracking docs (kept locally, not public)
-DECISIONS.md
-WORKFLOW.md
-TIMELINE.md
-TECH_STACK.md

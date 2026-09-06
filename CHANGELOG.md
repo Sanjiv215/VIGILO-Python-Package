@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2026-09-06
+
+### Added
+- **JavaScript & TypeScript Support (Node.js & React/JSX/TSX included):**
+  - Integrated fast, robust AST parsing using `tree-sitter`, `tree-sitter-javascript`, and `tree-sitter-typescript` (see `DECISIONS.md` ADR-011).
+  - Multi-language discovery supporting `.js`, `.mjs`, `.cjs`, `.jsx`, `.ts`, `.mts`, `.cts`, `.tsx`.
+  - Added 5 new JS/TS security detectors:
+    - `VIGILO-JS01`: Cross-Site Scripting (XSS) — flags `dangerouslySetInnerHTML`, `innerHTML`, `outerHTML`, `document.write`, `insertAdjacentHTML`, and `eval`-like contexts with dynamic inputs.
+    - `VIGILO-JS02`: Code Injection — flags dynamic `eval()`, `new Function()`, `setTimeout(string)`, and `setInterval(string)`.
+    - `VIGILO-JS03`: Command Injection — flags Node.js `child_process` methods (`exec`, `execSync`, `spawn`, `fork`) called with dynamic command strings or shell interpolations.
+    - `VIGILO-JS04`: Prototype Pollution — flags unvalidated writes to `__proto__`, `constructor.prototype`, and vulnerable recursive merge patterns.
+    - `VIGILO-JS05`: Hardcoded Secrets — detects API keys, JWT tokens, AWS access keys, private keys, and sensitive database connection strings.
+- **Tracking & Architecture Documentation:**
+  - Added all 5 required documentation files: `DECISIONS.md` (ADR-001 through ADR-013), `WORKFLOW.md`, `TECH_STACK.md`, `TIMELINE.md`, and `ROADMAP.md`.
+
+### Fixed
+- **CLI Mode Configuration (ADR-012):**
+  - Replaced dead `--correctness` flag with explicit `--mode {all,security,correctness}` selector (default: `all`) and `--security-only` / `-S` shortcut.
+- **Reporter Line Truncation & Terminal DoS Protection (ADR-013):**
+  - Enforced `MAX_SNIPPET_LENGTH = 200` characters in text and JSON reporters with clean `... [truncated, N chars total]` indicator on long lines.
+
+---
+
 ## [0.2.2] - 2026-09-05
 
 ### Security & Hardening (20-Technique Audit)

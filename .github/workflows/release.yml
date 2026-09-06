@@ -47,8 +47,8 @@ jobs:
       - name: Dependency vulnerability audit with pip-audit
         run: pip-audit --local
 
-      - name: Run test suite
-        run: python -m unittest discover -s tests
+      - name: Run test suite with pytest
+        run: pytest -v --strict-markers
 
   build-pypi:
     name: Build sdist & wheel
@@ -134,7 +134,8 @@ jobs:
 
       - name: Build binary with PyInstaller
         run: |
-          pyinstaller --onefile --clean --name vigilo src/vigilo/cli.py
+          pyinstaller --onefile --clean --name vigilo src/vigilo/cli.py --collect-all tree_sitter --collect-all tree_sitter_javascript --collect-all tree_sitter_typescript
+
 
       - name: Rename and move binary (Unix)
         if: runner.os != 'Windows'

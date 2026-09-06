@@ -17,7 +17,10 @@ def build_parser() -> argparse.ArgumentParser:
     """Construct the command-line argument parser."""
     parser = argparse.ArgumentParser(
         prog="vigilo",
-        description="Vigilo — A static, security and correctness code scanner for Python.",
+        description=(
+            "Vigilo — Fast static security and correctness scanner for Python, "
+            "JavaScript, and TypeScript."
+        ),
     )
     parser.add_argument(
         "--version",
@@ -35,24 +38,27 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_common_arguments(scan_parser)
     scan_parser.add_argument(
+        "--mode",
+        "-m",
+        choices=["all", "security", "correctness"],
+        default="all",
+        help=(
+            "Scan mode: 'all' (security + correctness), 'security' (security only), "
+            "'correctness' (diagnostics only) (default: all)"
+        ),
+    )
+    scan_parser.add_argument(
         "--security-only",
         "-S",
         action="store_true",
         default=False,
-        help="Run security detectors only, excluding code correctness diagnostics",
-    )
-    scan_parser.add_argument(
-        "--correctness",
-        "-c",
-        action="store_true",
-        default=True,
-        help="Include code correctness diagnostics (default: True)",
+        help="Shortcut for --mode security (only report security vulnerabilities)",
     )
 
     # 2. `vigilo diagnose`
     diagnose_parser = subparsers.add_parser(
         "diagnose",
-        help="Scan for both security vulnerabilities and code correctness diagnostics",
+        help="Run code correctness diagnostics (syntax, undefined names, resources)",
     )
     _add_common_arguments(diagnose_parser)
 
@@ -130,8 +136,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     min_sev_str = getattr(args, "min_severity", "low")
     excludes = getattr(args, "exclude", [])
     no_color = getattr(args, "no_color", False)
+    mode = getattr(args, "mode", "all")
     security_only = getattr(args, "security_only", False)
-    include_correctness = command == "diagnose" or not security_only
+
+    # Determine categories
+    if command == "diagnose" or mode == "correctness":
+        categories: list[str] | None = ["correctness"]
+        include_correctness = True
+    elif security_only or mode == "security":
+        categories = ["security"]
+        include_correctness = False
+    else:
+        categories = None
+        include_correctness = True
 
     min_severity = Severity(min_sev_str.lower())
     use_color = not no_color and sys.stdout.isatty() and out_format == "text"
@@ -142,6 +159,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             min_severity=min_severity,
             exclude_patterns=excludes if excludes else None,
             include_correctness=include_correctness,
+            categories=categories,
         )
         scanner = Scanner(config)
         findings = scanner.scan()

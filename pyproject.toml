@@ -4,15 +4,15 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vigilo"
-version = "0.2.2"
-description = "A fast, zero-configuration static security scanner that detects known vulnerability patterns in Python codebases."
+version = "0.3.0"
+description = "A fast, zero-configuration static security scanner that detects known vulnerability patterns in Python, JavaScript, and TypeScript codebases."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
     { name = "Sanjiv" }
 ]
-keywords = ["security", "sast", "vulnerability-scanner", "static-analysis", "cwe", "security-tools", "vigilo"]
+keywords = ["security", "sast", "vulnerability-scanner", "static-analysis", "cwe", "security-tools", "vigilo", "javascript", "typescript", "react", "node"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -23,8 +23,13 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: JavaScript",
 ]
-dependencies = []
+dependencies = [
+    "tree-sitter>=0.22.0,<1.0.0",
+    "tree-sitter-javascript>=0.21.0,<1.0.0",
+    "tree-sitter-typescript>=0.21.0,<1.0.0",
+]
 
 [project.optional-dependencies]
 dev = [
