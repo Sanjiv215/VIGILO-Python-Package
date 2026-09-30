@@ -24,33 +24,76 @@ class PathTraversalDetector(BaseDetector):
         severity=Severity.HIGH,
     )
 
+    @staticmethod
+    def _is_sanitized_path(node: ast.AST) -> bool:
+        """Check if path expression is protected by a sanitizer function or attribute."""
+        if isinstance(node, ast.Call):
+            sanitizers = ("basename", "secure_filename")
+            if isinstance(node.func, ast.Attribute) and node.func.attr in sanitizers:
+                return True
+            if isinstance(node.func, ast.Name) and node.func.id in sanitizers:
+                return True
+        if isinstance(node, ast.Attribute) and node.attr == "name":
+            # e.g., Path(p).name
+            return True
+        return False
+
     def _is_dynamic_path(
         self,
         node: ast.AST,
         scope: ast.FunctionDef | ast.AsyncFunctionDef | None,
     ) -> bool:
-        """Check if an expression represents a dynamic path."""
-        if FlowAnalyzer.is_constant(node):
+        """Check if an expression represents an unsafe dynamic path."""
+        if FlowAnalyzer.is_constant(node) or self._is_sanitized_path(node):
             return False
 
         # Dynamic string concatenation (e.g., "/base/" + filename)
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+            if self._is_sanitized_path(node.left) or self._is_sanitized_path(node.right):
+                return False
             return FlowAnalyzer.is_dynamic(node, scope)
 
         # Dynamic f-string (e.g., f"/base/{filename}")
         if isinstance(node, ast.JoinedStr):
-            return FlowAnalyzer.is_dynamic(node, scope)
+            for val in node.values:
+                if isinstance(val, ast.FormattedValue):
+                    sub_expr = val.value
+                    if isinstance(sub_expr, ast.Name) and scope:
+                        body = getattr(scope, "body", [])
+                        lineno = getattr(sub_expr, "lineno", 999999)
+                        assigned = FlowAnalyzer.trace_assignment_in_body(sub_expr.id, body, lineno)
+                        if assigned is not None:
+                            sub_expr = assigned
+                    if self._is_sanitized_path(sub_expr):
+                        continue
+                    if FlowAnalyzer.is_dynamic(val.value, scope):
+                        return True
+            return False
 
         # String formatting with % or .format()
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mod):
+            if self._is_sanitized_path(node.right):
+                return False
             return FlowAnalyzer.is_dynamic(node, scope)
 
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
             if node.func.attr == "format":
-                return any(FlowAnalyzer.is_dynamic(arg, scope) for arg in node.args)
+                return any(
+                    FlowAnalyzer.is_dynamic(arg, scope)
+                    for arg in node.args
+                    if not self._is_sanitized_path(arg)
+                )
 
         # Path passed directly from dynamic variable / parameter
         if isinstance(node, ast.Name):
+            if scope:
+                body = getattr(scope, "body", [])
+                lineno = getattr(node, "lineno", 999999)
+                assigned = FlowAnalyzer.trace_assignment_in_body(node.id, body, lineno)
+                if assigned is not None:
+                    if self._is_sanitized_path(assigned):
+                        return False
+                    return self._is_dynamic_path(assigned, scope)
             return FlowAnalyzer.is_dynamic(node, scope)
 
         return False

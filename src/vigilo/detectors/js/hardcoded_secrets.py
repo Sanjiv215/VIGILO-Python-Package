@@ -57,7 +57,7 @@ class JSHardcodedSecretsDetector(BaseJSDetector):
 
     # Common dummy / placeholder strings to ignore
     PLACEHOLDERS = re.compile(
-        r"^(?:placeholder|your[-_]?.*|test[-_]?.*|dummy|changeme|replace[-_]?.*|example|none|undefined|null|x{3,}|\*{3,})$",
+        r"^(?:placeholder|your[-_]?.*|test[-_]?.*|dummy|changeme|replace[-_]?.*|example|none|undefined|null|x{3,}|\*{3,}|production|development|staging|localhost|standard|default|authorized|unauthorized|true|false|Bearer\s?)$",
         re.IGNORECASE,
     )
 
@@ -129,7 +129,12 @@ class JSHardcodedSecretsDetector(BaseJSDetector):
                     if self.SENSITIVE_NAMES.match(key_name):
                         if val_node.type in ("string", "template_string"):
                             raw_val = self._strip_quotes(get_node_text(val_node, source_bytes))
-                            if len(raw_val) >= 8 and not self.PLACEHOLDERS.match(raw_val):
+                            prefixes = ("http://", "https://", "/", "./", "../")
+                            if (
+                                len(raw_val) >= 8
+                                and not self.PLACEHOLDERS.match(raw_val)
+                                and not raw_val.startswith(prefixes)
+                            ):
                                 if not any(p[1].search(raw_val) for p in self.PATTERNS):
                                     findings.append(
                                         self.create_finding(

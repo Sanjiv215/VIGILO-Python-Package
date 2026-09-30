@@ -21,7 +21,63 @@ BUILTIN_NAMES = set(dir(builtins)) | {
     "__annotations__",
     "__builtins__",
     "__debug__",
+    "__cached__",
+    "__class__",
+    "__qualname__",
+    "exit",
+    "quit",
+    "help",
+    "copyright",
+    "credits",
+    "license",
+    "WindowsError",
 }
+
+
+def _collect_top_level_definitions(statements: list[ast.stmt], target_scope: set[str]) -> bool:
+    has_star = False
+    for stmt in statements:
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            target_scope.add(stmt.name)
+        elif isinstance(stmt, ast.Import):
+            for alias in stmt.names:
+                target_scope.add(alias.asname or alias.name.split(".")[0])
+        elif isinstance(stmt, ast.ImportFrom):
+            if stmt.module != "__future__":
+                for alias in stmt.names:
+                    if alias.name == "*":
+                        has_star = True
+                    else:
+                        target_scope.add(alias.asname or alias.name)
+        elif isinstance(stmt, ast.Assign):
+            for target in stmt.targets:
+                for name in _extract_target_names(target):
+                    target_scope.add(name)
+        elif isinstance(stmt, ast.AnnAssign):
+            for name in _extract_target_names(stmt.target):
+                target_scope.add(name)
+        elif isinstance(stmt, (ast.If, ast.With, ast.AsyncWith)):
+            sub_has_star = _collect_top_level_definitions(stmt.body, target_scope)
+            if hasattr(stmt, "orelse") and stmt.orelse:
+                sub_has_star = (
+                    sub_has_star or _collect_top_level_definitions(stmt.orelse, target_scope)
+                )
+            has_star = has_star or sub_has_star
+        elif isinstance(stmt, ast.Try):
+            sub_has_star = _collect_top_level_definitions(stmt.body, target_scope)
+            for handler in stmt.handlers:
+                handler_star = _collect_top_level_definitions(handler.body, target_scope)
+                sub_has_star = sub_has_star or handler_star
+            if stmt.orelse:
+                sub_has_star = (
+                    sub_has_star or _collect_top_level_definitions(stmt.orelse, target_scope)
+                )
+            if stmt.finalbody:
+                sub_has_star = (
+                    sub_has_star or _collect_top_level_definitions(stmt.finalbody, target_scope)
+                )
+            has_star = has_star or sub_has_star
+    return has_star
 
 
 class ScopeVisitor(ast.NodeVisitor):
@@ -32,25 +88,9 @@ class ScopeVisitor(ast.NodeVisitor):
         self.undefined_nodes: list[tuple[ast.Name, str]] = []
         self.has_star_import = False
 
-        # Pre-populate module scope with top-level functions, classes, and assignments
+        # Pre-populate module scope with all top-level functions, classes, imports, and variables
         if tree is not None:
-            for stmt in tree.body:
-                if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                    self.scopes[0].add(stmt.name)
-                elif isinstance(stmt, ast.Import):
-                    for alias in stmt.names:
-                        self.scopes[0].add(alias.asname or alias.name.split(".")[0])
-                elif isinstance(stmt, ast.ImportFrom):
-                    if stmt.module != "__future__":
-                        for alias in stmt.names:
-                            if alias.name == "*":
-                                self.has_star_import = True
-                            else:
-                                self.scopes[0].add(alias.asname or alias.name)
-                elif isinstance(stmt, ast.Assign):
-                    for target in stmt.targets:
-                        for name in _extract_target_names(target):
-                            self.scopes[0].add(name)
+            self.has_star_import = _collect_top_level_definitions(tree.body, self.scopes[0])
 
     def push_scope(self) -> None:
         self.scopes.append(set())

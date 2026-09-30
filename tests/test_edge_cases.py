@@ -116,6 +116,74 @@ def do_everything(user_input):
             findings = Scanner(config).scan()
             self.assertEqual(len(findings), 0)
 
+    def test_false_positive_elimination(self) -> None:
+        """Verify detectors do not report false positives on safe and standard idioms."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+
+            # 1. Non-SQL execute() and text()
+            (tmp / "service.py").write_text(
+                """
+def run_task(executor, widget, task_id, username):
+    executor.execute(f"Processing batch {task_id}")
+    widget.text(f"Welcome {username}!")
+"""
+            )
+
+            # 2. Sanitized file open() paths
+            (tmp / "files.py").write_text(
+                """
+import os
+from pathlib import Path
+
+def read_user_file(raw_name):
+    safe_name = os.path.basename(raw_name)
+    with open(f"/data/{safe_name}") as f:
+        return f.read()
+
+def read_path_file(raw_path):
+    filename = Path(raw_path).name
+    with open(filename) as f:
+        return f.read()
+"""
+            )
+
+            # 3. Modern typed Python __all__ and conditional imports
+            (tmp / "module.py").write_text(
+                """
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
+__all__: list[str] = ["parse_data"]
+
+def parse_data(raw: str) -> "tomllib":
+    return tomllib.loads(raw)
+"""
+            )
+
+            # 4. JS 2D matrix assignment and safe configuration
+            (tmp / "matrix.js").write_text(
+                """
+function setCell(grid, row, col, val) {
+    grid[row][col] = val;
+}
+
+const apiKey = "production";
+const authToken = "https://auth.example.com/oauth/token";
+"""
+            )
+
+            config = ScanConfig(paths=[tmp])
+            findings = Scanner(config).scan()
+            msg_list = [f.message for f in findings]
+            self.assertEqual(
+                len(findings),
+                0,
+                f"Expected 0 false positive findings, got {len(findings)}: {msg_list}",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

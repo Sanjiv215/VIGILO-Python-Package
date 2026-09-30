@@ -49,17 +49,26 @@ class UnusedCodeDetector(BaseDetector):
         for node in ast.walk(tree):
             if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
                 referenced_names.add(node.id)
+            elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+                if node.value.isidentifier():
+                    referenced_names.add(node.value)
 
         # Check __all__ definitions in module
         all_exported: set[str] = set()
         for node in ast.walk(tree):
+            val_node = None
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name) and target.id == "__all__":
-                        if isinstance(node.value, (ast.List, ast.Tuple, ast.Set)):
-                            for elt in node.value.elts:
-                                if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
-                                    all_exported.add(elt.value)
+                        val_node = node.value
+            elif isinstance(node, (ast.AnnAssign, ast.AugAssign)):
+                if isinstance(node.target, ast.Name) and node.target.id == "__all__":
+                    val_node = node.value
+
+            if val_node and isinstance(val_node, (ast.List, ast.Tuple, ast.Set)):
+                for elt in val_node.elts:
+                    if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
+                        all_exported.add(elt.value)
 
         # Flag unused imports
         for name, (node, orig_name) in imports.items():

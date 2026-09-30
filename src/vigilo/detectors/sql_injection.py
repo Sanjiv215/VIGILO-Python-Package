@@ -44,6 +44,15 @@ class SQLInjectionDetector(BaseDetector):
         )
         return any(kw in upper for kw in keywords)
 
+    def _extract_binop_strings(self, node: ast.AST) -> list[str]:
+        """Extract all constant string components in an addition chain."""
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+            return self._extract_binop_strings(node.left) + self._extract_binop_strings(node.right)
+        val = FlowAnalyzer.get_constant_value(node)
+        if isinstance(val, str):
+            return [val]
+        return []
+
     def _is_dynamic_sql(
         self,
         node: ast.AST,
@@ -55,21 +64,28 @@ class SQLInjectionDetector(BaseDetector):
 
         # F-string containing dynamic variables
         if isinstance(node, ast.JoinedStr):
+            text_parts = [
+                str(val.value)
+                for val in node.values
+                if isinstance(val, ast.Constant) and isinstance(val.value, str)
+            ]
+            if not self._is_sql_like_string(" ".join(text_parts)):
+                return False
             return FlowAnalyzer.is_dynamic(node, scope)
 
         # String formatting via % operator (e.g. "SELECT ... %s" % val)
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mod):
             left_val = FlowAnalyzer.get_constant_value(node.left)
             if isinstance(left_val, str) and self._is_sql_like_string(left_val):
-                return True
-            return FlowAnalyzer.is_dynamic(node, scope)
+                return FlowAnalyzer.is_dynamic(node.right, scope)
+            return False
 
         # String concatenation via + operator (e.g. "SELECT ... " + val)
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
-            left_val = FlowAnalyzer.get_constant_value(node.left)
-            if isinstance(left_val, str) and self._is_sql_like_string(left_val):
-                return FlowAnalyzer.is_dynamic(node.right, scope)
-            return FlowAnalyzer.is_dynamic(node, scope)
+            strings = self._extract_binop_strings(node)
+            if any(self._is_sql_like_string(s) for s in strings):
+                return FlowAnalyzer.is_dynamic(node, scope)
+            return False
 
         # str.format() calls (e.g. "SELECT ... {}".format(val))
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
@@ -77,10 +93,17 @@ class SQLInjectionDetector(BaseDetector):
                 val = FlowAnalyzer.get_constant_value(node.func.value)
                 if isinstance(val, str) and self._is_sql_like_string(val):
                     return any(FlowAnalyzer.is_dynamic(arg, scope) for arg in node.args)
+                return False
 
         # Traced variable
         if isinstance(node, ast.Name):
-            return FlowAnalyzer.is_dynamic(node, scope)
+            if scope:
+                body = getattr(scope, "body", [])
+                lineno = getattr(node, "lineno", 999999)
+                assigned = FlowAnalyzer.trace_assignment_in_body(node.id, body, lineno)
+                if assigned is not None:
+                    return self._is_dynamic_sql(assigned, scope)
+            return False
 
         return False
 

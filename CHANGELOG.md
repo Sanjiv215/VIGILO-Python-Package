@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.2] - 2026-09-30
+
+### Fixed
+- **Eliminated False Positives ("Hallucinations") across Detectors:**
+  - **SQL Injection (`VIGILO-001`):** Verified that dynamic f-strings and string concatenations actually contain SQL keywords (`SELECT`, `INSERT`, `UPDATE`, etc.) before flagging, eliminating false positives on non-SQL `execute()` calls (e.g. `executor.execute(...)`) and UI methods (`widget.text(...)`).
+  - **JS Prototype Pollution (`VIGILO-JS-004`):** Excluded 2D array and matrix indexing (`grid[row][col] = val`, `table[i][j] = 0`) from prototype pollution alerts.
+  - **JS Hardcoded Secrets (`VIGILO-JS-005`):** Excluded URLs, file paths, and standard environment strings (`production`, `development`, `localhost`, etc.) from variable assignment checks.
+  - **Path Traversal (`VIGILO-005`):** Recognized sanitized path expressions using `os.path.basename`, `Path.name`, and `secure_filename`.
+  - **Undefined Name (`VIGILO-C02`):** Recursively pre-populated all module-level definitions including `AnnAssign`, conditional imports inside `try/except` and `if`, and expanded standard builtins.
+  - **Unused Import (`VIGILO-C03`):** Supported `AnnAssign` and `AugAssign` for `__all__`, and recognized forward-reference type annotations in string literals.
+  - **JS/TS Parser Fallback:** Added automatic TSX grammar fallback when parsing `.js`/`.ts` files that encounter syntax errors, ensuring JSX in `.js` files parses cleanly without false syntax errors.
+
+---
+
 ## [0.3.1] - 2026-09-06
 
 ### Fixed

@@ -91,9 +91,21 @@ class JSPrototypePollutionDetector(BaseJSDetector):
                         if inner_obj is not None and inner_obj.type == "subscript_expression":
                             inner_index = inner_obj.child_by_field_name("index")
                             if inner_index is not None and index is not None:
-                                if not is_literal_node(
-                                    inner_index, source_bytes
-                                ) or not is_literal_node(index, source_bytes):
+                                inner_txt = get_node_text(inner_index, source_bytes).strip()
+                                index_txt = get_node_text(index, source_bytes).strip()
+                                numeric_index_names = {
+                                    "i", "j", "k", "x", "y", "z", "r", "c", "row", "col",
+                                    "index", "idx", "offset", "pos", "step", "n", "m",
+                                }
+                                is_numeric_index = (
+                                    inner_txt in numeric_index_names
+                                    or index_txt in numeric_index_names
+                                    or inner_index.type == "number"
+                                    or index.type == "number"
+                                    or is_literal_node(inner_index, source_bytes)
+                                    or is_literal_node(index, source_bytes)
+                                )
+                                if not is_numeric_index:
                                     surrounding_code = source_str
                                     if not any(
                                         guard in surrounding_code

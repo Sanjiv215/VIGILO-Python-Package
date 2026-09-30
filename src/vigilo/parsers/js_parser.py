@@ -79,6 +79,12 @@ def parse_js_ts(
         lang = select_language_for_file(file_path)
         parser = tree_sitter.Parser(lang)
         tree = parser.parse(source_bytes)
+        valid_suffixes = (".js", ".mjs", ".cjs", ".ts")
+        if tree.root_node.has_error and Path(file_path).suffix.lower() in valid_suffixes:
+            tsx_parser = tree_sitter.Parser(get_tsx_language())
+            tsx_tree = tsx_parser.parse(source_bytes)
+            if not tsx_tree.root_node.has_error:
+                return tsx_tree, source_str, source_bytes, None
         return tree, source_str, source_bytes, None
     except Exception as e:
         return None, source_str, source_bytes, f"Failed to parse JS/TS syntax tree: {e}"
