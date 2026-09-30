@@ -56,7 +56,7 @@ class BaseJSDetector(ABC):
         severity: Severity | None = None,
     ) -> Finding:
         """Construct a strongly typed Finding object from an AST node."""
-        loc = get_location(node, file_path)
+        loc = get_location(node, file_path, source_bytes=source_str)
         src_line = self.extract_source_line(source_str, loc.line)
         lang = get_file_language(file_path)
 

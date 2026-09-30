@@ -1,6 +1,7 @@
 """Language parsers for Vigilo."""
 
 from vigilo.parsers.js_parser import (
+    find_first_syntax_error,
     get_javascript_language,
     get_location,
     get_node_text,
@@ -13,6 +14,7 @@ from vigilo.parsers.js_parser import (
 )
 
 __all__ = [
+    "find_first_syntax_error",
     "get_javascript_language",
     "get_location",
     "get_node_text",

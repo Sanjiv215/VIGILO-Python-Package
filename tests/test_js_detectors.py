@@ -154,3 +154,25 @@ class TestJSScannerIntegration:
             assert "Syntax error" in f.message
             assert f.language == "typescript"
             assert f.location.line >= 1
+
+    def test_jsx_parse_error_nodes_no_crash_and_accurate_line(self, tmp_path: Path) -> None:
+        import gc
+        jsx_file = tmp_path / "Component.jsx"
+        jsx_file.write_text(
+            "import React from 'react';\n"
+            "export function Component() {\n"
+            "  return (\n"
+            "    <div>\n"
+            "      <h1>Terms & Notes</h1>\n"
+            "    </div>\n"
+            "  );\n"
+            "}\n",
+            encoding="utf-8",
+        )
+        scanner = Scanner(ScanConfig(paths=[jsx_file]))
+        findings = scanner.scan()
+        assert len(findings) == 1
+        assert findings[0].location.line == 5
+        assert findings[0].location.col == 17
+        assert "Terms & Notes" in findings[0].source_line or "& Notes" in findings[0].message
+        gc.collect()

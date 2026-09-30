@@ -96,15 +96,51 @@ def get_node_text(node: tree_sitter.Node, source_bytes: bytes) -> str:
     return raw.decode("utf-8", errors="replace")
 
 
-def get_location(node: tree_sitter.Node, file_path: Path) -> Location:
+def get_location(
+    node: tree_sitter.Node,
+    file_path: Path,
+    source_bytes: bytes | str | None = None,
+) -> Location:
     """Convert tree-sitter node start/end points into a Vigilo Location object."""
-    return Location(
-        file=file_path,
-        line=node.start_point.row + 1,
-        col=node.start_point.column + 1,
-        end_line=node.end_point.row + 1,
-        end_col=node.end_point.column + 1,
-    )
+    if source_bytes is not None:
+        try:
+            raw = source_bytes if isinstance(source_bytes, bytes) else source_bytes.encode("utf-8")
+            start_byte = node.start_byte
+            prefix = raw[:start_byte]
+            line = prefix.count(b"\n") + 1
+            last_nl = prefix.rfind(b"\n")
+            col = (start_byte - last_nl) if last_nl != -1 else (start_byte + 1)
+
+            end_byte = node.end_byte
+            end_prefix = raw[:end_byte]
+            end_line = end_prefix.count(b"\n") + 1
+            end_last_nl = end_prefix.rfind(b"\n")
+            end_col = (end_byte - end_last_nl) if end_last_nl != -1 else (end_byte + 1)
+
+            return Location(
+                file=file_path,
+                line=line,
+                col=col,
+                end_line=end_line,
+                end_col=end_col,
+            )
+        except Exception:
+            pass
+
+    try:
+        return Location(
+            file=file_path,
+            line=node.start_point.row + 1,
+            col=node.start_point.column + 1,
+            end_line=node.end_point.row + 1,
+            end_col=node.end_point.column + 1,
+        )
+    except Exception:
+        return Location(
+            file=file_path,
+            line=1,
+            col=1,
+        )
 
 
 def is_literal_node(node: tree_sitter.Node, source_bytes: bytes) -> bool:
@@ -146,13 +182,60 @@ def is_literal_node(node: tree_sitter.Node, source_bytes: bytes) -> bool:
     return False
 
 
-def walk_tree(root: tree_sitter.Node) -> list[tree_sitter.Node]:
+def walk_tree(root: tree_sitter.Node, skip_errors: bool = True) -> list[tree_sitter.Node]:
     """Recursively traverse all nodes in a syntax tree."""
     nodes: list[tree_sitter.Node] = []
     stack = [root]
     while stack:
         curr = stack.pop()
         nodes.append(curr)
-        for child in reversed(curr.children):
-            stack.append(child)
+        if skip_errors and (curr.type == "ERROR" or curr.is_missing):
+            continue
+        try:
+            for child in reversed(curr.children):
+                stack.append(child)
+        except Exception:
+            continue
     return nodes
+
+
+def find_first_syntax_error(
+    tree: tree_sitter.Tree,
+    source_bytes: bytes,
+) -> tuple[int, int, str] | None:
+    """Safely locate the first syntax error without allocating unnecessary node lists.
+
+    Returns:
+        (line, col, snippet) or None if no syntax error found.
+    """
+    if not tree.root_node.has_error:
+        return None
+
+    cursor = tree.walk()
+    try:
+        while True:
+            node = cursor.node
+            if node.type == "ERROR" or node.is_missing:
+                start_byte = node.start_byte
+                end_byte = node.end_byte
+                prefix = source_bytes[:start_byte]
+                line = prefix.count(b"\n") + 1
+                last_nl = prefix.rfind(b"\n")
+                col = (start_byte - last_nl) if last_nl != -1 else (start_byte + 1)
+                raw = source_bytes[start_byte:end_byte]
+                snippet = raw.decode("utf-8", errors="replace").strip()
+                return line, col, snippet
+
+            if cursor.goto_first_child():
+                continue
+            if cursor.goto_next_sibling():
+                continue
+
+            retracing = True
+            while retracing:
+                if not cursor.goto_parent():
+                    return None
+                if cursor.goto_next_sibling():
+                    retracing = False
+    finally:
+        del cursor

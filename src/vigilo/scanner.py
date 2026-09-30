@@ -18,7 +18,7 @@ from vigilo.detectors import (
 from vigilo.detectors.syntax_error import SyntaxErrorDetector
 from vigilo.discovery import discover_files, get_file_language
 from vigilo.models import Finding, Severity
-from vigilo.parsers.js_parser import get_node_text, parse_js_ts, walk_tree
+from vigilo.parsers.js_parser import find_first_syntax_error, get_node_text, parse_js_ts, walk_tree
 
 
 @dataclass
@@ -144,27 +144,24 @@ class Scanner:
 
         # 2. Syntax / structural parse errors detected by Tree-Sitter
         if tree.root_node.has_error and syntax_detector is not None:
-            for node in walk_tree(tree.root_node):
-                if node.type == "ERROR" or node.is_missing:
-                    err_line = node.start_point.row + 1
-                    err_col = node.start_point.column + 1
-                    err_txt = get_node_text(node, raw_bytes).strip()
-                    err_desc = (
-                        f"unexpected or malformed syntax near '{err_txt}'"
-                        if err_txt
-                        else "malformed syntax"
+            err_info = find_first_syntax_error(tree, raw_bytes)
+            if err_info is not None:
+                err_line, err_col, err_txt = err_info
+                err_desc = (
+                    f"unexpected or malformed syntax near '{err_txt}'"
+                    if err_txt
+                    else "malformed syntax"
+                )
+                findings.append(
+                    syntax_detector.check_js_syntax_error(
+                        file_path=file_path,
+                        source=source_str,
+                        error_msg=err_desc,
+                        line=err_line,
+                        col=err_col,
+                        language=lang,
                     )
-                    findings.append(
-                        syntax_detector.check_js_syntax_error(
-                            file_path=file_path,
-                            source=source_str,
-                            error_msg=err_desc,
-                            line=err_line,
-                            col=err_col,
-                            language=lang,
-                        )
-                    )
-                    break
+                )
 
         for detector in self.js_detectors:
             try:

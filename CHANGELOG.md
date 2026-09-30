@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.3] - 2026-09-30
+
+### Fixed
+- **Critical Segmentation Fault (SIGSEGV) in Tree-Sitter Traversal & Parse Error Nodes:**
+  - Resolved native memory corruption and segmentation faults (`EXC_BAD_ACCESS` in `_PyObject_ClearFreeLists` during garbage collection and process exit) when scanning real-world JavaScript/TypeScript files containing Tree-Sitter `ERROR` or missing nodes.
+  - Implemented safe `find_first_syntax_error()` using `TreeCursor` without constructing flat lists of tens of thousands of `tree_sitter.Node` wrapper objects.
+  - Computed 1-indexed line and column numbers safely from byte offsets (`node.start_byte`), completely avoiding unstable C-level tuple allocator/freelist corruption from `tree_sitter.Point` under Python 3.14.
+  - Pruned tree traversal in `walk_tree()` to never descend into the broken children of `ERROR` or `MISSING` nodes.
+  - Added regression test `test_jsx_parse_error_nodes_no_crash_and_accurate_line` and validated against real-world production JSX (`ERP_PORTAL/client`).
+
+---
+
 ## [0.3.2] - 2026-09-30
 
 ### Fixed
