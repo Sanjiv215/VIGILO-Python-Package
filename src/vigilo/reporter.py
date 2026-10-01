@@ -104,8 +104,6 @@ def format_text_report(findings: Sequence[Finding], use_color: bool = True) -> s
     if corr > 0 and sec > 0:
         counts_str = f"{counts['high']} high, {counts['medium']} medium, {counts['low']} low"
         breakdown = f"({sec} security, {corr} correctness | {counts_str})"
-    elif corr > 0:
-        breakdown = f"({counts['high']} high, {counts['medium']} medium, {counts['low']} low)"
     else:
         breakdown = f"({counts['high']} high, {counts['medium']} medium, {counts['low']} low)"
 
