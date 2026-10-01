@@ -94,11 +94,32 @@ class JSPrototypePollutionDetector(BaseJSDetector):
                                 inner_txt = get_node_text(inner_index, source_bytes).strip()
                                 index_txt = get_node_text(index, source_bytes).strip()
                                 numeric_index_names = {
-                                    "i", "j", "k", "x", "y", "z", "r", "c", "row", "col",
-                                    "index", "idx", "offset", "pos", "step", "n", "m",
+                                    "i",
+                                    "j",
+                                    "k",
+                                    "x",
+                                    "y",
+                                    "z",
+                                    "r",
+                                    "c",
+                                    "row",
+                                    "col",
+                                    "index",
+                                    "idx",
+                                    "offset",
+                                    "pos",
+                                    "step",
+                                    "n",
+                                    "m",
                                 }
                                 safe_suffixes = (
-                                    "id", "_id", "date", "_date", "year", "month", "uuid"
+                                    "id",
+                                    "_id",
+                                    "date",
+                                    "_date",
+                                    "year",
+                                    "month",
+                                    "uuid",
                                 )
                                 is_safe_index = (
                                     inner_txt in numeric_index_names

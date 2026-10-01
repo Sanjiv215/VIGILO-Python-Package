@@ -59,8 +59,8 @@ def _collect_top_level_definitions(statements: list[ast.stmt], target_scope: set
         elif isinstance(stmt, (ast.If, ast.With, ast.AsyncWith)):
             sub_has_star = _collect_top_level_definitions(stmt.body, target_scope)
             if hasattr(stmt, "orelse") and stmt.orelse:
-                sub_has_star = (
-                    sub_has_star or _collect_top_level_definitions(stmt.orelse, target_scope)
+                sub_has_star = sub_has_star or _collect_top_level_definitions(
+                    stmt.orelse, target_scope
                 )
             has_star = has_star or sub_has_star
         elif isinstance(stmt, ast.Try):
@@ -69,12 +69,12 @@ def _collect_top_level_definitions(statements: list[ast.stmt], target_scope: set
                 handler_star = _collect_top_level_definitions(handler.body, target_scope)
                 sub_has_star = sub_has_star or handler_star
             if stmt.orelse:
-                sub_has_star = (
-                    sub_has_star or _collect_top_level_definitions(stmt.orelse, target_scope)
+                sub_has_star = sub_has_star or _collect_top_level_definitions(
+                    stmt.orelse, target_scope
                 )
             if stmt.finalbody:
-                sub_has_star = (
-                    sub_has_star or _collect_top_level_definitions(stmt.finalbody, target_scope)
+                sub_has_star = sub_has_star or _collect_top_level_definitions(
+                    stmt.finalbody, target_scope
                 )
             has_star = has_star or sub_has_star
     return has_star

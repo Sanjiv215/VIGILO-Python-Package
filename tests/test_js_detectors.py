@@ -157,6 +157,7 @@ class TestJSScannerIntegration:
 
     def test_jsx_parse_error_nodes_no_crash_and_accurate_line(self, tmp_path: Path) -> None:
         import gc
+
         # 1. Valid JSX with bare ampersand must NOT be flagged as syntax error
         jsx_file = tmp_path / "Component.jsx"
         jsx_file.write_text(

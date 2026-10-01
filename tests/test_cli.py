@@ -86,6 +86,7 @@ class TestCLI(unittest.TestCase):
 
             self.assertEqual(code, 0)
             from vigilo import __version__
+
             self.assertIn(f'"version": "{__version__}"', stdout_capture.getvalue())
 
     def test_cli_non_existent_path(self) -> None:

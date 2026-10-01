@@ -44,6 +44,7 @@ class TestReporter(unittest.TestCase):
         data = json.loads(report)
 
         from vigilo import __version__
+
         self.assertEqual(data["version"], __version__)
         self.assertEqual(data["summary"]["total"], 1)
         self.assertEqual(data["summary"]["high"], 1)
