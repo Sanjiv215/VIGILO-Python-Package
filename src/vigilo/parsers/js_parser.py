@@ -124,7 +124,7 @@ def get_location(
                 end_line=end_line,
                 end_col=end_col,
             )
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     try:
@@ -194,7 +194,7 @@ def walk_tree(root: tree_sitter.Node, skip_errors: bool = True) -> list[tree_sit
         try:
             for child in reversed(curr.children):
                 stack.append(child)
-        except Exception:
+        except Exception:  # noqa: S112
             continue
     return nodes
 
@@ -215,7 +215,7 @@ def find_first_syntax_error(
     try:
         while True:
             node = cursor.node
-            if node.type == "ERROR" or node.is_missing:
+            if node is not None and (node.type == "ERROR" or node.is_missing):
                 start_byte = node.start_byte
                 end_byte = node.end_byte
                 prefix = source_bytes[:start_byte]

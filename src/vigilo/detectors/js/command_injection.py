@@ -97,7 +97,10 @@ class JSCommandInjectionDetector(BaseJSDetector):
                                         if (
                                             k
                                             and v
-                                            and get_node_text(k, source_bytes).strip("'\"") == "shell"
+                                            and (
+                                                get_node_text(k, source_bytes).strip("'\"")
+                                                == "shell"
+                                            )
                                             and get_node_text(v, source_bytes) in ("true", "1")
                                         ):
                                             has_shell_true = True

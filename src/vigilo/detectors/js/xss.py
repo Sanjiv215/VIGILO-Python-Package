@@ -29,7 +29,7 @@ class JSXSSDetector(BaseJSDetector):
     SANITIZER_NAMES = {"sanitize", "DOMPurify", "escapeHtml", "cleanHtml"}
 
     def _is_sanitized(self, node: tree_sitter.Node, source_bytes: bytes) -> bool:
-        """Check if an expression or any nested sub-expression is wrapped in a known sanitizer call."""
+        """Check if an expression or nested sub-expression is wrapped in a known sanitizer."""
         for sub in walk_tree(node):
             if sub.type == "call_expression":
                 fn = sub.child_by_field_name("function")
