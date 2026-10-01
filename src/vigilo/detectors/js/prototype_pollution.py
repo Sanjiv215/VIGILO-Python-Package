@@ -106,9 +106,23 @@ class JSPrototypePollutionDetector(BaseJSDetector):
                                     or is_literal_node(index, source_bytes)
                                 )
                                 if not is_numeric_index:
-                                    surrounding_code = source_str
+                                    # Scope guard check to nearest function/block, not entire file
+                                    scope_node = node.parent
+                                    while scope_node is not None and scope_node.type not in (
+                                        "function_declaration",
+                                        "arrow_function",
+                                        "method_definition",
+                                        "function",
+                                        "program",
+                                    ):
+                                        scope_node = scope_node.parent
+                                    scope_text = (
+                                        get_node_text(scope_node, source_bytes)
+                                        if scope_node is not None
+                                        else ""
+                                    )
                                     if not any(
-                                        guard in surrounding_code
+                                        guard in scope_text
                                         for guard in (
                                             "__proto__",
                                             "hasOwnProperty",
