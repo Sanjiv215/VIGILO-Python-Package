@@ -57,7 +57,10 @@ class JSHardcodedSecretsDetector(BaseJSDetector):
 
     # Common dummy / placeholder strings to ignore
     PLACEHOLDERS = re.compile(
-        r"^(?:placeholder|your[-_]?.*|test[-_]?.*|dummy|changeme|replace[-_]?.*|example|none|undefined|null|x{3,}|\*{3,}|production|development|staging|localhost|standard|default|authorized|unauthorized|true|false|Bearer\s?)$",
+        r"^(?:placeholder|your[-_]?.*|test[-_]?.*|demo[-_]?.*|mock[-_]?.*|fake[-_]?.*|"
+        r"sample[-_]?.*|dummy.*|changeme.*|replace[-_]?.*|example.*|none|undefined|null|"
+        r"x{3,}|\*{3,}|production|development|staging|localhost|standard|default|"
+        r"authorized|unauthorized|true|false|Bearer\s?)$",
         re.IGNORECASE,
     )
 
