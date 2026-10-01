@@ -117,6 +117,20 @@ class TestJSHardcodedSecretsDetector:
         findings = _run_js_detector(JSHardcodedSecretsDetector, file_path)
         assert len(findings) == 0
 
+    def test_generalized_api_keys_and_prefixed_names(self, tmp_path: Path) -> None:
+        test_file = tmp_path / "keys.js"
+        test_file.write_text(
+            """
+export const SYNC_SERVICE_API_KEY = "sk_test_51MxzT2vK8qL1wM9p0X4yZ7aB2cD5eF8gH1iJ3kL5mN7oP9qR";
+const openai = "sk-1234567890abcdef1234567890abcdef";
+const sendgrid = "SG.1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12";
+const my_custom_secret = "super_unpredictable_secret_val_123";
+"""
+        )
+        findings = _run_js_detector(JSHardcodedSecretsDetector, test_file)
+        assert len(findings) == 4
+        assert all(f.detector.id == "VIGILO-JS-005" for f in findings)
+
 
 class TestJSScannerIntegration:
     def test_scan_full_js_vulnerable_fixtures(self) -> None:

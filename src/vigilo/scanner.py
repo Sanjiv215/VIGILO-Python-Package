@@ -15,6 +15,7 @@ from vigilo.detectors import (
     BaseDetector,
     BaseJSDetector,
 )
+from vigilo.detectors.config_secrets import scan_config_file
 from vigilo.detectors.syntax_error import SyntaxErrorDetector
 from vigilo.discovery import discover_files, get_file_language
 from vigilo.models import Finding, Severity
@@ -179,6 +180,15 @@ class Scanner:
             return self.scan_python_file(file_path)
         if lang in ("javascript", "typescript"):
             return self.scan_js_file(file_path)
+        if lang == "config":
+            # Only scan config files if security detectors / secrets are active
+            has_secrets_detector = any(
+                getattr(d.meta, "id", "") == "VIGILO-006" for d in self.py_detectors
+            )
+            if has_secrets_detector or (
+                self.config.categories is None or "security" in self.config.categories
+            ):
+                return scan_config_file(file_path)
         return []
 
     def scan(self) -> list[Finding]:

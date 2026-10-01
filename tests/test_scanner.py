@@ -99,6 +99,24 @@ class TestScanner(unittest.TestCase):
             )
             self.assertEqual(len(Scanner(config).scan()), 1)
 
+    def test_config_and_env_secrets_detection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            stripe_key = "sk_test_51MxzT2vK8qL1wM9p0X4yZ7aB2cD5eF8gH1iJ3kL5mN7oP9qR"
+            (tmp / ".env").write_text(f"STRIPE_KEY={stripe_key}\n")
+            (tmp / "settings.json").write_text('{"api_secret": "my_super_secret_token_123"}\n')
+            (tmp / "config.yaml").write_text("aws_key: AKIAIOSFODNN7EXAMPLE\n")
+            (tmp / "package-lock.json").write_text(f'{{"fake": "{stripe_key}"}}\n')
+
+            config = ScanConfig(paths=[tmp], include_correctness=False)
+            findings = Scanner(config).scan()
+
+            # Should detect .env, settings.json, config.yaml, but NOT package-lock.json
+            self.assertEqual(len(findings), 3)
+            files_found = {f.location.file.name for f in findings}
+            self.assertEqual(files_found, {".env", "settings.json", "config.yaml"})
+            self.assertTrue(all(f.detector.id == "VIGILO-006" for f in findings))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -62,6 +62,54 @@ def list_all():
         findings = self._scan(code)
         self.assertEqual(len(findings), 0)
 
+    def test_multiline_conditional_query_building(self) -> None:
+        code = """
+def filter_tasks(status, search):
+    query = "SELECT * FROM tasks WHERE 1=1"
+    params = []
+    if status:
+        query += " AND status = ?"
+        params.append(status)
+    if search:
+        query += f" AND (title LIKE '%{search}%')"
+    cursor.execute(query, params)
+"""
+        findings = self._scan(code)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].detector.id, "VIGILO-001")
+        self.assertEqual(findings[0].location.line, 10)
+
+    def test_sqlalchemy_text_injection(self) -> None:
+        code = """
+from sqlalchemy import text
+
+def get_records(db_session, user_input):
+    stmt = text(f"SELECT * FROM items WHERE category = '{user_input}'")
+    db_session.execute(stmt)
+"""
+        findings = self._scan(code)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].detector.id, "VIGILO-001")
+
+    def test_django_raw_and_extra_injection(self) -> None:
+        code = """
+def django_queries(user_input):
+    User.objects.raw(f"SELECT * FROM myapp_user WHERE username = '{user_input}'")
+    Entry.objects.extra(where=[f"headline = '{user_input}'"])
+"""
+        findings = self._scan(code)
+        self.assertEqual(len(findings), 2)
+        self.assertTrue(all(f.detector.id == "VIGILO-001" for f in findings))
+
+    def test_driver_executemany_injection(self) -> None:
+        code = """
+def batch_insert(table_name, rows):
+    cursor.executemany(f"INSERT INTO {table_name} VALUES (?, ?)", rows)
+"""
+        findings = self._scan(code)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].detector.id, "VIGILO-001")
+
 
 if __name__ == "__main__":
     unittest.main()

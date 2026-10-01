@@ -6,6 +6,7 @@ from vigilo.detectors.bare_except import BareExceptDetector
 from vigilo.detectors.base import BaseDetector
 from vigilo.detectors.code_injection import CodeInjectionDetector
 from vigilo.detectors.command_injection import CommandInjectionDetector
+from vigilo.detectors.hardcoded_secrets import HardcodedSecretsDetector
 from vigilo.detectors.js import (
     JS_DETECTORS,
     BaseJSDetector,
@@ -29,6 +30,7 @@ PYTHON_SECURITY_DETECTORS: list[type[BaseDetector]] = [
     CodeInjectionDetector,
     UnsafeDeserializationDetector,
     PathTraversalDetector,
+    HardcodedSecretsDetector,
 ]
 
 PYTHON_CORRECTNESS_DETECTORS: list[type[BaseDetector]] = [
@@ -57,6 +59,7 @@ __all__ = [
     "BaseJSDetector",
     "CodeInjectionDetector",
     "CommandInjectionDetector",
+    "HardcodedSecretsDetector",
     "JSCodeInjectionDetector",
     "JSCommandInjectionDetector",
     "JSHardcodedSecretsDetector",

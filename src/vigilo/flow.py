@@ -95,19 +95,55 @@ class FlowAnalyzer:
         return False
 
     @staticmethod
+    def _flatten_statements_before(
+        stmts: list[ast.stmt],
+        before_lineno: int,
+    ) -> list[ast.stmt]:
+        """Recursively collect statements occurring before `before_lineno` in lexical order."""
+        result: list[ast.stmt] = []
+        for stmt in stmts:
+            lineno = getattr(stmt, "lineno", 0)
+            if lineno >= before_lineno:
+                break
+
+            result.append(stmt)
+
+            if isinstance(stmt, (ast.If, ast.While, ast.For, ast.AsyncFor)):
+                result.extend(FlowAnalyzer._flatten_statements_before(stmt.body, before_lineno))
+                if stmt.orelse:
+                    result.extend(
+                        FlowAnalyzer._flatten_statements_before(stmt.orelse, before_lineno)
+                    )
+            elif isinstance(stmt, (ast.With, ast.AsyncWith)):
+                result.extend(FlowAnalyzer._flatten_statements_before(stmt.body, before_lineno))
+            elif isinstance(stmt, ast.Try):
+                result.extend(FlowAnalyzer._flatten_statements_before(stmt.body, before_lineno))
+                for handler in stmt.handlers:
+                    result.extend(
+                        FlowAnalyzer._flatten_statements_before(handler.body, before_lineno)
+                    )
+                if stmt.orelse:
+                    result.extend(
+                        FlowAnalyzer._flatten_statements_before(stmt.orelse, before_lineno)
+                    )
+                if stmt.finalbody:
+                    result.extend(
+                        FlowAnalyzer._flatten_statements_before(stmt.finalbody, before_lineno)
+                    )
+        return result
+
+    @classmethod
     def trace_assignment_in_body(
+        cls,
         name: str,
         body: list[ast.stmt],
         before_lineno: int,
     ) -> ast.expr | None:
         """Find the latest assignment to `name` in body occurring before `before_lineno`."""
+        all_stmts = cls._flatten_statements_before(body, before_lineno)
         last_assigned_expr: ast.expr | None = None
 
-        for stmt in body:
-            lineno = getattr(stmt, "lineno", 0)
-            if lineno >= before_lineno:
-                break
-
+        for stmt in all_stmts:
             if isinstance(stmt, ast.Assign):
                 for target in stmt.targets:
                     if isinstance(target, ast.Name) and target.id == name:
@@ -121,6 +157,38 @@ class FlowAnalyzer:
                     last_assigned_expr = stmt.value
 
         return last_assigned_expr
+
+    @classmethod
+    def trace_all_assignments_in_scope(
+        cls,
+        name: str,
+        scope: ast.AST | None,
+        before_lineno: int,
+    ) -> list[ast.expr]:
+        """Collect all expressions assigned or augmented to `name` before `before_lineno`."""
+        if scope is None:
+            return []
+        body = getattr(scope, "body", [])
+        if not isinstance(body, list):
+            return []
+
+        all_stmts = cls._flatten_statements_before(body, before_lineno)
+        assigned: list[ast.expr] = []
+
+        for stmt in all_stmts:
+            if isinstance(stmt, ast.Assign):
+                for target in stmt.targets:
+                    if isinstance(target, ast.Name) and target.id == name:
+                        assigned.append(stmt.value)
+            elif isinstance(stmt, ast.AnnAssign):
+                if isinstance(stmt.target, ast.Name) and stmt.target.id == name:
+                    if stmt.value is not None:
+                        assigned.append(stmt.value)
+            elif isinstance(stmt, ast.AugAssign):
+                if isinstance(stmt.target, ast.Name) and stmt.target.id == name:
+                    assigned.append(stmt.value)
+
+        return assigned
 
     @staticmethod
     def is_dynamic(

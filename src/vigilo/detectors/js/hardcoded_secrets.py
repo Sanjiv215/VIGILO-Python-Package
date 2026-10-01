@@ -32,6 +32,7 @@ class JSHardcodedSecretsDetector(BaseJSDetector):
             "GitHub Personal Access Token",
             re.compile(r"(?:ghp|gho|ghu|ghs|ghr)_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9_]{82}"),
         ),
+        ("Stripe API Key", re.compile(r"(?:sk|pk)_(?:live|test)_[0-9a-zA-Z]{24,}")),
         ("Slack Token", re.compile(r"xox[baprs]-[0-9a-zA-Z]{10,48}")),
         (
             "JWT Authentication Token",
@@ -47,11 +48,16 @@ class JSHardcodedSecretsDetector(BaseJSDetector):
                 r"(?:postgres|postgresql|mysql|mongodb(?:\+srv)?|redis)://[^:\s]+:[^@\s]+@[^/\s]+/[^?\s]+"
             ),
         ),
+        ("OpenAI API Key", re.compile(r"sk-[a-zA-Z0-9]{32,}")),
+        ("Google API Key", re.compile(r"AIza[0-9A-Za-z-_]{35}")),
+        ("SendGrid API Key", re.compile(r"SG\.[a-zA-Z0-9_\-\.]{66}")),
     ]
 
     # Sensitive key/variable names
     SENSITIVE_NAMES = re.compile(
-        r"^(?:api_?key|secret_?key|auth_?token|jwt_?secret|private_?key|client_?secret|db_?password|access_?token)$",
+        r"(?:(?:api|secret|auth|jwt|private|client|db|database|admin|service|access|master|encryption|token|session)[-_]?(?:key|secret|token|password|pass|cred|credential)s?|"
+        r"^(?:password|passwd|secret|token|api_?key)$|"
+        r".*_(?:key|secret|token|password|credential|apikey)$)",
         re.IGNORECASE,
     )
 

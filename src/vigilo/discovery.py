@@ -27,6 +27,10 @@ DEFAULT_EXCLUDES: tuple[str, ...] = (
     ".pytest_cache",
     ".ruff_cache",
     "node_modules",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "poetry.lock",
 )
 
 SUPPORTED_EXTENSIONS: tuple[str, ...] = (
@@ -37,15 +41,32 @@ SUPPORTED_EXTENSIONS: tuple[str, ...] = (
     ".cjs",
     ".ts",
     ".tsx",
+    ".env",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".toml",
 )
 
 PYTHON_EXTENSIONS: tuple[str, ...] = (".py",)
 JS_EXTENSIONS: tuple[str, ...] = (".js", ".jsx", ".mjs", ".cjs")
 TS_EXTENSIONS: tuple[str, ...] = (".ts", ".tsx")
+CONFIG_EXTENSIONS: tuple[str, ...] = (".env", ".json", ".yaml", ".yml", ".toml")
+
+
+def is_supported_file(file_path: Path) -> bool:
+    """Check if file matches supported code or config formats (including dot-env files)."""
+    name = file_path.name.lower()
+    if name == ".env" or name.startswith(".env."):
+        return True
+    return file_path.suffix.lower() in SUPPORTED_EXTENSIONS
 
 
 def get_file_language(file_path: Path) -> str:
-    """Return language identifier ('python', 'javascript', 'typescript') based on file extension."""
+    """Return language identifier ('python', 'javascript', 'typescript', 'config')."""
+    name = file_path.name.lower()
+    if name == ".env" or name.startswith(".env."):
+        return "config"
     suffix = file_path.suffix.lower()
     if suffix in PYTHON_EXTENSIONS:
         return "python"
@@ -53,6 +74,8 @@ def get_file_language(file_path: Path) -> str:
         return "typescript"
     if suffix in JS_EXTENSIONS:
         return "javascript"
+    if suffix in CONFIG_EXTENSIONS:
+        return "config"
     return "unknown"
 
 
@@ -103,8 +126,13 @@ def discover_files(
     if not target_path.exists():
         raise FileNotFoundError(f"Target path does not exist: {target_path}")
 
+    def _file_matches(fp: Path) -> bool:
+        if allowed_exts is SUPPORTED_EXTENSIONS:
+            return is_supported_file(fp)
+        return fp.suffix.lower() in allowed_exts
+
     if target_path.is_file():
-        if target_path.suffix.lower() in allowed_exts and not should_exclude(target_path, excludes):
+        if _file_matches(target_path) and not should_exclude(target_path, excludes):
             return [target_path]
         return []
 
@@ -143,7 +171,7 @@ def discover_files(
 
         for file_name in files:
             file_path = root_path / file_name
-            if file_path.suffix.lower() in allowed_exts:
+            if _file_matches(file_path):
                 # If follow_symlinks is False, do not follow file symlinks
                 if not follow_symlinks and file_path.is_symlink():
                     continue
