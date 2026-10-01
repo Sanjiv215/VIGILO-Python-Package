@@ -30,8 +30,21 @@ class JSXSSDetector(BaseJSDetector):
 
     def _is_sanitized(self, node: tree_sitter.Node, source_bytes: bytes) -> bool:
         """Check if an expression is wrapped in a known sanitizer call."""
-        text = get_node_text(node, source_bytes)
-        return any(sanitizer in text for sanitizer in self.SANITIZER_NAMES)
+        if node.type == "call_expression":
+            fn = node.child_by_field_name("function")
+            if fn is not None:
+                fn_text = get_node_text(fn, source_bytes)
+                if any(sanitizer in fn_text for sanitizer in self.SANITIZER_NAMES):
+                    return True
+        # Check if the node itself is a child of a sanitizer call
+        for child in node.children if hasattr(node, 'children') else []:
+            if child.type == "call_expression":
+                fn = child.child_by_field_name("function")
+                if fn is not None:
+                    fn_text = get_node_text(fn, source_bytes)
+                    if any(sanitizer in fn_text for sanitizer in self.SANITIZER_NAMES):
+                        return True
+        return False
 
     def run(
         self,
