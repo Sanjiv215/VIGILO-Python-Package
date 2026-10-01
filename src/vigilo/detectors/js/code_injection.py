@@ -97,24 +97,19 @@ class JSCodeInjectionDetector(BaseJSDetector):
                                     )
                                 )
 
-                    # setTimeout(dynamicExpression, ms) / setInterval(dynamicExpression, ms)
+                    # setTimeout("code", 1000) / setInterval("code", 1000)
                     elif fn_name in self.TIMER_FUNCTIONS:
                         named_args = args.named_children
                         if named_args:
                             first_arg = named_args[0]
-                            # Only flag non-literal (dynamic) first arguments
-                            if not is_literal_node(first_arg, source_bytes) and first_arg.type not in (
-                                "arrow_function",
-                                "function_expression",
-                                "function",
-                            ):
+                            if first_arg.type in ("string", "template_string", "binary_expression"):
                                 findings.append(
                                     self.create_finding(
                                         node=node,
                                         file_path=file_path,
                                         source_str=source_str,
                                         message=(
-                                            f"Passing dynamic expression to {fn_name}() triggers "
+                                            f"Passing string expression to {fn_name}() triggers "
                                             "implicit eval()."
                                         ),
                                         fix_hint=(
