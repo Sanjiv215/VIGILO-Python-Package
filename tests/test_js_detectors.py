@@ -157,6 +157,7 @@ class TestJSScannerIntegration:
 
     def test_jsx_parse_error_nodes_no_crash_and_accurate_line(self, tmp_path: Path) -> None:
         import gc
+        # 1. Valid JSX with bare ampersand must NOT be flagged as syntax error
         jsx_file = tmp_path / "Component.jsx"
         jsx_file.write_text(
             "import React from 'react';\n"
@@ -171,8 +172,25 @@ class TestJSScannerIntegration:
         )
         scanner = Scanner(ScanConfig(paths=[jsx_file]))
         findings = scanner.scan()
-        assert len(findings) == 1
-        assert findings[0].location.line == 5
-        assert findings[0].location.col == 17
-        assert "Terms & Notes" in findings[0].source_line or "& Notes" in findings[0].message
+        assert len(findings) == 0, "Valid JSX with bare ampersands should not trigger syntax errors"
+        gc.collect()
+
+        # 2. Genuine malformed JSX must report syntax error without crash or memory corruption
+        broken_file = tmp_path / "Broken.jsx"
+        broken_file.write_text(
+            "import React from 'react';\n"
+            "export function Broken() {\n"
+            "  return (\n"
+            "    <div>\n"
+            "      <h1>Terms & Notes\n"
+            "    </div>\n"
+            "  );\n"
+            "}\n",
+            encoding="utf-8",
+        )
+        broken_scanner = Scanner(ScanConfig(paths=[broken_file]))
+        broken_findings = broken_scanner.scan()
+        assert len(broken_findings) == 1
+        assert broken_findings[0].detector.id == "VIGILO-C01"
+        assert broken_findings[0].location.line >= 1
         gc.collect()

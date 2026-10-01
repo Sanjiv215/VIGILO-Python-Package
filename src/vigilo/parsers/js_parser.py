@@ -216,15 +216,25 @@ def find_first_syntax_error(
         while True:
             node = cursor.node
             if node is not None and (node.type == "ERROR" or node.is_missing):
-                start_byte = node.start_byte
-                end_byte = node.end_byte
-                prefix = source_bytes[:start_byte]
-                line = prefix.count(b"\n") + 1
-                last_nl = prefix.rfind(b"\n")
-                col = (start_byte - last_nl) if last_nl != -1 else (start_byte + 1)
-                raw = source_bytes[start_byte:end_byte]
-                snippet = raw.decode("utf-8", errors="replace").strip()
-                return line, col, snippet
+                parent = node.parent
+                raw = source_bytes[node.start_byte : node.end_byte]
+                # Tree-sitter JSX grammar expects XML entity references for ampersands,
+                # but bare ampersands in JSX text (e.g. <p>Terms & Conditions</p>) are valid
+                # React JSX. Skip bare ampersands inside JSX elements to avoid false positives.
+                if (
+                    parent is not None
+                    and parent.type in ("jsx_element", "jsx_fragment")
+                    and raw.strip().startswith(b"&")
+                ):
+                    pass
+                else:
+                    start_byte = node.start_byte
+                    prefix = source_bytes[:start_byte]
+                    line = prefix.count(b"\n") + 1
+                    last_nl = prefix.rfind(b"\n")
+                    col = (start_byte - last_nl) if last_nl != -1 else (start_byte + 1)
+                    snippet = raw.decode("utf-8", errors="replace").strip()
+                    return line, col, snippet
 
             if cursor.goto_first_child():
                 continue
