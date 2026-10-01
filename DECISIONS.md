@@ -161,3 +161,34 @@ Lightweight Architecture Decision Records (ADRs) for Vigilo.
 **Decision:** Enforce a strict snippet length bound (`MAX_SNIPPET_LENGTH = 200` characters) in both text and JSON report formatters. When a line exceeds 200 characters, truncate it and append `... [truncated, N chars total]`.
 **Consequences:** Prevents terminal flooding and memory bloat on pathological/minified files while retaining actionable context for developers.
 
+---
+
+## ADR-014: Deferred Multi-Statement Taint Tracking Engine & Declarative YAML Rule DSL
+
+**Date:** 2026-10-01
+**Context:** Following a real-world bug-hunt finding where Vigilo missed a path-traversal vulnerability in Flask (`os.path.join` + `os.path.exists` + `send_file`), a post-mortem proposed transitioning Vigilo from call-site AST pattern matching with local assignment resolution to a generalized dataflow taint-tracking engine (sources, propagators, sanitizers, sinks) defined via a declarative, Semgrep-style YAML rule DSL.
+**Problem Analysis:**
+Every current Vigilo detector (`VIGILO-001` through `VIGILO-005` in Python, plus JS/TS detectors) is implemented as a dedicated Python class using local single-file AST inspection and one-hop assignment resolution (`FlowAnalyzer`). A true taint engine requires constructing and traversing inter-statement control-flow (CFG) and data-flow graphs (DFG), tracking taint propagation through arbitrary functions/operations, and clearing taint when values pass through certified sanitizers.
+**Options Considered:**
+1. **Option 1: Patch-Sized Sink & Pattern Expansion (Adopted for v0.3.4):**
+   - Expand sink lists in Python and framework response methods (`send_file`, `FileResponse`, `wrap_file`, `serve`, `Path.read_*`).
+   - Treat path combiners (`os.path.join`, `Path.joinpath`, `/`) and path sanitizers (`secure_filename`, `basename`) within the existing local flow model.
+   - *Pros:* Zero runtime dependency additions, fast execution (<1ms per file), preserves simple architecture, ships immediately.
+   - *Cons:* Does not generalize across arbitrary multi-statement data flow chains across functions or files.
+2. **Option 2: Minimal Intra-Procedural Taint Graph Engine (Target: v0.4.0+):**
+   - Implement an explicit Data Flow Graph (DFG) engine tracking untrusted source nodes (e.g. `request.args`, `os.environ`), propagation edges (e.g. `os.path.join`, string concat, function returns), sanitization filter nodes (`secure_filename`, boundary checks), and reachability to dangerous sinks.
+   - *Pros:* Eliminates class-by-class data-flow edge cases, dramatically improves precision and true-positive recall on multi-statement flows.
+   - *Cons:* Major architectural rewrite of the core analysis pipeline; requires rewriting all 5 core Python security detectors; adds runtime complexity and memory footprint.
+3. **Option 3: Declarative Semgrep-Style YAML Rule DSL (Target: v0.4.0+ or v0.5.0):**
+   - Introduce a declarative schema (`pattern-sources`, `pattern-propagators`, `pattern-sanitizers`, `pattern-sinks`) allowing rules to be authored in YAML files instead of Python classes.
+   - *Pros:* Decouples rule authoring from engine internals, enables community rule contributions without Python code changes.
+   - *Cons:* Requires building or embedding a YAML parser / query evaluation runtime; creates two competing ways to define detectors unless all existing Python detectors are ported; increases architectural surface area.
+**Decision:**
+- **In Scope for v0.3.4:** Ship Option 1. Expand sink list in `VIGILO-005`, ensure `os.path.exists()` does not neutralize traversal findings, and improve Flask fix hint.
+- **Explicitly Deferred:** Defer Options 2 and 3 to **v0.4.0+**. Do NOT implement taint tracking or YAML DSL in v0.3.4.
+- **Architectural Prerequisite:** Prior to implementing Option 2 or 3, alignment and explicit confirmation from the human maintainer is required to determine whether:
+  1. The taint engine should remain internal Python-first vs. YAML-DSL-driven.
+  2. Vigilo should maintain pure standard library execution or consider external graph libraries.
+  3. Existing detector classes will be preserved alongside graph queries or migrated entirely.
+**Consequences:** v0.3.4 remains lean, fast, zero-dependency, and backward compatible. The roadmap for v0.4.0 establishes a clear technical blueprint for deep dataflow analysis.
+

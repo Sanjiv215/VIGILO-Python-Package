@@ -26,3 +26,4 @@ This timeline is constructed directly from repository git commit history and rel
 | **2026-09-06 10:55:00** | `v0.3.1` | **Release v0.3.1** | Surfaced JS/TS parse/syntax errors as `VIGILO-C01`, fixed reporter spacing bugs, standardized rule names. |
 | **2026-09-30 17:30:00** | `v0.3.2` | **Release v0.3.2** | Eliminated detector false positives on SQL, JS prototype pollution, JS secrets, path traversal, undefined names, and unused imports. |
 | **2026-09-30 19:25:00** | `v0.3.3` | **Release v0.3.3** | Fixed critical Tree-Sitter SIGSEGV / memory corruption on JSX parse-error nodes, safe cursor traversal, and byte-offset locations. |
+| **2026-10-01 11:15:00** | `v0.3.4` | **Release v0.3.4** | Expanded path traversal (`VIGILO-005`) framework and stdlib sinks, added Flask remediation hint, added permanent bug-hunt regression fixture. |

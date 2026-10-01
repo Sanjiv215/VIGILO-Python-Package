@@ -141,7 +141,7 @@ for finding in findings:
 | **`VIGILO-002`** | CWE-78 | OS Command Injection | `HIGH` | `subprocess.*(shell=True)`, `os.system()`, `os.popen()` |
 | **`VIGILO-003`** | CWE-94 | Code Injection | `HIGH` | `eval()`, `exec()`, `compile()` |
 | **`VIGILO-004`** | CWE-502 | Unsafe Deserialization | `HIGH` | `pickle.loads()`, `yaml.load()`, `marshal.loads()` |
-| **`VIGILO-005`** | CWE-22 | Path Traversal | `HIGH` | `open()`, `os.open()`, `io.open()` |
+| **`VIGILO-005`** | CWE-22 | Path Traversal | `HIGH` | `open()`, `send_file()`, `FileResponse()`, `Path.read_*()`, `serve()`, `wrap_file()` |
 
 ### JavaScript / TypeScript / React Security Detectors (New in v0.3.0)
 

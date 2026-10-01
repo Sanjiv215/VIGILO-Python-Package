@@ -9,8 +9,17 @@ from vigilo.detectors.base import BaseDetector
 from vigilo.flow import FlowAnalyzer
 from vigilo.models import DetectorMeta, Finding, Severity
 
-PATH_OPEN_FUNCTIONS = {"open"}
-PATH_MODULE_FUNCTIONS = {("os", "open"), ("io", "open")}
+FLASK_FIX_HINT = (
+    "Replace send_file(os.path.join(DIR, name)) with:\n"
+    "  from flask import send_from_directory\n"
+    "  return send_from_directory(DIR, name, as_attachment=True)\n"
+    "or sanitize the filename first with werkzeug.utils.secure_filename(name)."
+)
+
+DEFAULT_FIX_HINT = (
+    "Sanitize file paths using `os.path.basename()` or verify that "
+    "the resolved path starts with the intended base directory."
+)
 
 
 class PathTraversalDetector(BaseDetector):
@@ -23,6 +32,90 @@ class PathTraversalDetector(BaseDetector):
         description="Detects dynamic or user-controlled paths passed to file open functions",
         severity=Severity.HIGH,
     )
+
+    @staticmethod
+    def _get_call_name(node: ast.AST) -> str | None:
+        """Resolve dotted or bare function call name from AST node."""
+        parts: list[str] = []
+        curr: ast.AST | None = node
+        while isinstance(curr, ast.Attribute):
+            parts.append(curr.attr)
+            curr = curr.value
+        if isinstance(curr, ast.Name):
+            parts.append(curr.id)
+            return ".".join(reversed(parts))
+        return None
+
+    def _identify_sink(self, node: ast.Call) -> tuple[str | None, ast.expr | None]:
+        """Identify if a call is a dangerous file path sink and extract the path argument."""
+        # pathlib Path().read_text() / Path().read_bytes()
+        if isinstance(node.func, ast.Attribute) and node.func.attr in ("read_text", "read_bytes"):
+            attr = node.func.attr
+            receiver = node.func.value
+            return f"Path.{attr}", receiver
+
+        call_name = self._get_call_name(node.func)
+        if not call_name:
+            return None, None
+
+        short_name = call_name.split(".")[-1]
+
+        # 1. Standard open functions: open(), os.open(), io.open()
+        if call_name in ("open", "os.open", "io.open"):
+            if node.args:
+                return call_name, node.args[0]
+            for kw in node.keywords:
+                if kw.arg in ("file", "path"):
+                    return call_name, kw.value
+            return None, None
+
+        # 2. Flask / Werkzeug send_file: flask.send_file(), send_file()
+        if short_name == "send_file" and call_name in ("send_file", "flask.send_file"):
+            if node.args:
+                return call_name, node.args[0]
+            for kw in node.keywords:
+                if kw.arg in ("path_or_file", "filename_or_fp", "file", "path"):
+                    return call_name, kw.value
+            return None, None
+
+        # 3. Werkzeug wrap_file: werkzeug.wsgi.wrap_file(environ, file)
+        if call_name in ("werkzeug.wsgi.wrap_file", "wsgi.wrap_file") or (
+            short_name == "wrap_file"
+            and (len(node.args) >= 2 or any(k.arg == "file" for k in node.keywords))
+        ):
+            for kw in node.keywords:
+                if kw.arg == "file":
+                    return call_name, kw.value
+            if len(node.args) >= 2:
+                return call_name, node.args[1]
+            if len(node.args) == 1:
+                return call_name, node.args[0]
+            return None, None
+
+        # 4. FastAPI / Starlette / Django FileResponse
+        if short_name.endswith("FileResponse"):
+            if node.args:
+                return call_name, node.args[0]
+            for kw in node.keywords:
+                if kw.arg in ("path", "open_file", "streaming_content"):
+                    return call_name, kw.value
+            return None, None
+
+        # 5. Django static serve: django.views.static.serve(request, path, document_root=...)
+        if call_name in ("django.views.static.serve", "static.serve") or (
+            short_name == "serve"
+            and (len(node.args) >= 2 or any(k.arg == "path" for k in node.keywords))
+        ):
+            for kw in node.keywords:
+                if kw.arg == "path":
+                    return call_name, kw.value
+            if len(node.args) >= 2:
+                return call_name, node.args[1]
+            if len(node.args) == 1:
+                return call_name, node.args[0]
+            return None, None
+
+        return None, None
 
     @staticmethod
     def _is_sanitized_path(node: ast.AST) -> bool:
@@ -41,17 +134,22 @@ class PathTraversalDetector(BaseDetector):
     def _is_dynamic_path(
         self,
         node: ast.AST,
-        scope: ast.FunctionDef | ast.AsyncFunctionDef | None,
+        scope: ast.FunctionDef | ast.AsyncFunctionDef | ast.Module | None,
     ) -> bool:
         """Check if an expression represents an unsafe dynamic path."""
         if FlowAnalyzer.is_constant(node) or self._is_sanitized_path(node):
             return False
 
-        # Dynamic string concatenation (e.g., "/base/" + filename)
-        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        if isinstance(node, ast.Name) and node.id.isupper():
+            return False
+
+        # Dynamic string concatenation or pathlib path construction (e.g., base / filename)
+        if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Div)):
             if self._is_sanitized_path(node.left) or self._is_sanitized_path(node.right):
                 return False
-            return FlowAnalyzer.is_dynamic(node, scope)
+            return self._is_dynamic_path(node.left, scope) or self._is_dynamic_path(
+                node.right, scope
+            )
 
         # Dynamic f-string (e.g., f"/base/{filename}")
         if isinstance(node, ast.JoinedStr):
@@ -66,23 +164,58 @@ class PathTraversalDetector(BaseDetector):
                             sub_expr = assigned
                     if self._is_sanitized_path(sub_expr):
                         continue
-                    if FlowAnalyzer.is_dynamic(val.value, scope):
+                    if self._is_dynamic_path(val.value, scope):
                         return True
             return False
 
-        # String formatting with % or .format()
+        # String formatting with %
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mod):
             if self._is_sanitized_path(node.right):
                 return False
-            return FlowAnalyzer.is_dynamic(node, scope)
+            return self._is_dynamic_path(node.right, scope)
 
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-            if node.func.attr == "format":
+        # Method/function calls
+        if isinstance(node, ast.Call):
+            if self._is_sanitized_path(node):
+                return False
+            if isinstance(node.func, ast.Attribute) and node.func.attr == "format":
                 return any(
-                    FlowAnalyzer.is_dynamic(arg, scope)
+                    self._is_dynamic_path(arg, scope)
                     for arg in node.args
                     if not self._is_sanitized_path(arg)
                 )
+            # Handle join/joinpath calls (e.g., os.path.join, Path.joinpath)
+            if (
+                isinstance(node.func, ast.Attribute) and node.func.attr in ("join", "joinpath")
+            ) or (isinstance(node.func, ast.Name) and node.func.id == "join"):
+                return any(
+                    self._is_dynamic_path(arg, scope)
+                    for arg in node.args
+                    if not self._is_sanitized_path(arg)
+                )
+            # Handle Path(p) or pathlib.Path(p) constructor
+            if (isinstance(node.func, ast.Name) and node.func.id == "Path") or (
+                isinstance(node.func, ast.Attribute) and node.func.attr == "Path"
+            ):
+                return any(
+                    self._is_dynamic_path(arg, scope)
+                    for arg in node.args
+                    if not self._is_sanitized_path(arg)
+                )
+            # Common path normalization wrappers: if arguments are safe/constant, call is safe
+            if isinstance(node.func, ast.Attribute) and node.func.attr in (
+                "abspath",
+                "realpath",
+                "relpath",
+                "normpath",
+                "expanduser",
+            ):
+                return any(
+                    self._is_dynamic_path(arg, scope)
+                    for arg in node.args
+                    if not self._is_sanitized_path(arg)
+                )
+            return FlowAnalyzer.is_dynamic(node, scope)
 
         # Path passed directly from dynamic variable / parameter
         if isinstance(node, ast.Name):
@@ -106,31 +239,13 @@ class PathTraversalDetector(BaseDetector):
             if not isinstance(node, ast.Call):
                 continue
 
-            scope = self.get_enclosing_function(node, parent_map)
-            is_file_open = False
-            func_name = ""
+            scope = self.get_enclosing_function(node, parent_map) or tree
+            func_name, path_arg = self._identify_sink(node)
 
-            # Check built-in open(...)
-            if isinstance(node.func, ast.Name) and node.func.id in PATH_OPEN_FUNCTIONS:
-                is_file_open = True
-                func_name = node.func.id
-
-            # Check os.open(...), io.open(...)
-            elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
-                module_name = node.func.value.id
-                method_name = node.func.attr
-                if (module_name, method_name) in PATH_MODULE_FUNCTIONS:
-                    is_file_open = True
-                    func_name = f"{module_name}.{method_name}"
-
-            if is_file_open and node.args:
-                path_arg = node.args[0]
+            if func_name and path_arg is not None:
                 if self._is_dynamic_path(path_arg, scope):
                     msg = f"Possible path traversal: dynamic path in `{func_name}()`."
-                    hint = (
-                        "Sanitize file paths using `os.path.basename()` or verify that "
-                        "the resolved path starts with the intended base directory."
-                    )
+                    hint = FLASK_FIX_HINT if "send_file" in func_name else DEFAULT_FIX_HINT
                     findings.append(
                         self.create_finding(
                             node=node,

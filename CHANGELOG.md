@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.4] - 2026-10-01
+
+### Added
+- **Expanded Path Traversal (`VIGILO-005`) Sink Coverage:**
+  - Added framework file-response functions and stdlib sinks to dangerous sink detection:
+    - Flask / Werkzeug: `flask.send_file()`, `send_file()` (bare import), `werkzeug.wsgi.wrap_file()`.
+    - FastAPI / Starlette: `starlette.responses.FileResponse()`, `fastapi.responses.FileResponse()`.
+    - Django: `django.http.FileResponse()`, `django.views.static.serve()`.
+    - Standard library: `open()`, `os.open()`, `io.open()`, `pathlib.Path().read_bytes()`, `pathlib.Path().read_text()`.
+  - Added tailored Flask remediation guidance recommending `send_from_directory` or `secure_filename`.
+  - Added permanent regression fixture `tests/fixtures/path_traversal_bug_hunt.py`.
+  - Confirmed existence checks (`os.path.exists`) do not neutralize traversal findings.
+
+---
+
 ## [0.3.3] - 2026-09-30
 
 ### Fixed
