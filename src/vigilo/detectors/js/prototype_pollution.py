@@ -97,15 +97,20 @@ class JSPrototypePollutionDetector(BaseJSDetector):
                                     "i", "j", "k", "x", "y", "z", "r", "c", "row", "col",
                                     "index", "idx", "offset", "pos", "step", "n", "m",
                                 }
-                                is_numeric_index = (
+                                safe_suffixes = (
+                                    "id", "_id", "date", "_date", "year", "month", "uuid"
+                                )
+                                is_safe_index = (
                                     inner_txt in numeric_index_names
                                     or index_txt in numeric_index_names
-                                    or inner_index.type == "number"
-                                    or index.type == "number"
+                                    or inner_index.type in ("number", "member_expression")
+                                    or index.type in ("number", "member_expression")
+                                    or inner_txt.lower().endswith(safe_suffixes)
+                                    or index_txt.lower().endswith(safe_suffixes)
                                     or is_literal_node(inner_index, source_bytes)
                                     or is_literal_node(index, source_bytes)
                                 )
-                                if not is_numeric_index:
+                                if not is_safe_index:
                                     # Scope guard check to nearest function/block, not entire file
                                     scope_node = node.parent
                                     while scope_node is not None and scope_node.type not in (
