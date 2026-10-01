@@ -30,7 +30,7 @@ def scan(
     Returns:
         List of Finding objects discovered during scan.
     """
-    if isinstance(min_severity, str):
+    if not isinstance(min_severity, Severity) and isinstance(min_severity, str):
         min_severity = Severity(min_severity.lower())
 
     config = ScanConfig(

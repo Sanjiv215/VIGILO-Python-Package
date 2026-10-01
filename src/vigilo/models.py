@@ -25,35 +25,51 @@ class Severity(str, Enum):
         return ranks[self]
 
     def __ge__(self, other: Severity | str) -> bool:
+        if isinstance(other, Severity):
+            return self.rank >= other.rank
         if isinstance(other, str):
             try:
                 other = Severity(other.lower())
             except ValueError:
                 return NotImplemented
+        else:
+            return NotImplemented
         return self.rank >= other.rank
 
     def __gt__(self, other: Severity | str) -> bool:
+        if isinstance(other, Severity):
+            return self.rank > other.rank
         if isinstance(other, str):
             try:
                 other = Severity(other.lower())
             except ValueError:
                 return NotImplemented
+        else:
+            return NotImplemented
         return self.rank > other.rank
 
     def __le__(self, other: Severity | str) -> bool:
+        if isinstance(other, Severity):
+            return self.rank <= other.rank
         if isinstance(other, str):
             try:
                 other = Severity(other.lower())
             except ValueError:
                 return NotImplemented
+        else:
+            return NotImplemented
         return self.rank <= other.rank
 
     def __lt__(self, other: Severity | str) -> bool:
+        if isinstance(other, Severity):
+            return self.rank < other.rank
         if isinstance(other, str):
             try:
                 other = Severity(other.lower())
             except ValueError:
                 return NotImplemented
+        else:
+            return NotImplemented
         return self.rank < other.rank
 
 
