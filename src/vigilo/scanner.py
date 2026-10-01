@@ -18,7 +18,7 @@ from vigilo.detectors import (
 from vigilo.detectors.syntax_error import SyntaxErrorDetector
 from vigilo.discovery import discover_files, get_file_language
 from vigilo.models import Finding, Severity
-from vigilo.parsers.js_parser import find_first_syntax_error, get_node_text, parse_js_ts, walk_tree
+from vigilo.parsers.js_parser import find_first_syntax_error, parse_js_ts
 
 
 @dataclass
