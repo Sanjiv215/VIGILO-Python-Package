@@ -159,10 +159,9 @@ class PathTraversalDetector(BaseDetector):
         if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Div)):
             if self._is_sanitized_path(node.left) or self._is_sanitized_path(node.right):
                 return False
-            return (
-                self._is_dynamic_path(node.left, scope, visited_names, known_constants)
-                or self._is_dynamic_path(node.right, scope, visited_names, known_constants)
-            )
+            return self._is_dynamic_path(
+                node.left, scope, visited_names, known_constants
+            ) or self._is_dynamic_path(node.right, scope, visited_names, known_constants)
 
         # Dynamic f-string (e.g., f"/base/{filename}")
         if isinstance(node, ast.JoinedStr):

@@ -114,7 +114,6 @@ def handle_requests(untrusted_path, req, env):
         for f in findings:
             self.assertEqual(f.detector.id, "VIGILO-005")
 
-
     def test_reproduction_false_positives(self) -> None:
         code = """
 import contextlib
