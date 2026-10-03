@@ -146,7 +146,9 @@ class PathTraversalDetector(BaseDetector):
         if FlowAnalyzer.is_constant(node) or self._is_sanitized_path(node):
             return False
 
-        if isinstance(node, ast.Name) and (node.id.isupper() or known_constants.get(node.id, False)):
+        if isinstance(node, ast.Name) and (
+            node.id.isupper() or known_constants.get(node.id, False)
+        ):
             return False
         if isinstance(node, ast.Name):
             if node.id in visited_names:
@@ -157,7 +159,10 @@ class PathTraversalDetector(BaseDetector):
         if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Div)):
             if self._is_sanitized_path(node.left) or self._is_sanitized_path(node.right):
                 return False
-            return self._is_dynamic_path(node.left, scope, visited_names, known_constants) or self._is_dynamic_path(node.right, scope, visited_names, known_constants)
+            return (
+                self._is_dynamic_path(node.left, scope, visited_names, known_constants)
+                or self._is_dynamic_path(node.right, scope, visited_names, known_constants)
+            )
 
         # Dynamic f-string (e.g., f"/base/{filename}")
         if isinstance(node, ast.JoinedStr):

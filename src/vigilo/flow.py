@@ -21,9 +21,18 @@ class FlowAnalyzer:
                         known_constants[name] = True
                     elif isinstance(node.value, ast.Name) and node.value.id in known_constants:
                         known_constants[name] = True
-                    elif isinstance(node.value, ast.BinOp) and isinstance(node.value.op, (ast.Add, ast.Div)):
-                        if (FlowAnalyzer.is_constant(node.value.left) or (isinstance(node.value.left, ast.Name) and node.value.left.id in known_constants)) and \
-                           (FlowAnalyzer.is_constant(node.value.right) or (isinstance(node.value.right, ast.Name) and node.value.right.id in known_constants)):
+                    elif isinstance(node.value, ast.BinOp) and isinstance(
+                        node.value.op, (ast.Add, ast.Div)
+                    ):
+                        left_is_const = FlowAnalyzer.is_constant(node.value.left) or (
+                            isinstance(node.value.left, ast.Name)
+                            and node.value.left.id in known_constants
+                        )
+                        right_is_const = FlowAnalyzer.is_constant(node.value.right) or (
+                            isinstance(node.value.right, ast.Name)
+                            and node.value.right.id in known_constants
+                        )
+                        if left_is_const and right_is_const:
                             known_constants[name] = True
             elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
                 name = node.target.id

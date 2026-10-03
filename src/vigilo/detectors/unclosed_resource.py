@@ -35,7 +35,10 @@ class UnclosedResourceDetector(BaseDetector):
                         func_name = ""
                         if isinstance(item.context_expr.func, ast.Name):
                             func_name = item.context_expr.func.id
-                        elif isinstance(item.context_expr.func, ast.Attribute) and item.context_expr.func.attr == "closing":
+                        elif (
+                            isinstance(item.context_expr.func, ast.Attribute)
+                            and item.context_expr.func.attr == "closing"
+                        ):
                             func_name = "closing"
                         if func_name == "closing" and item.context_expr.args:
                             first_arg = item.context_expr.args[0]
