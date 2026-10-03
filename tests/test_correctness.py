@@ -176,6 +176,14 @@ def safe_task():
             clean_msg = "No security vulnerabilities or correctness issues found"
             self.assertIn(clean_msg, out_sec.getvalue())
 
+    def test_contextlib_closing_not_flagged(self) -> None:
+        fixture_path = Path(__file__).parent / "fixtures" / "diagnostics" / "false_positives.py"
+        from vigilo import scan
+
+        findings = scan(fixture_path, include_correctness=True)
+        unclosed = [f for f in findings if f.detector.id == "VIGILO-C04"]
+        self.assertEqual(len(unclosed), 0)
+
     def test_fixtures_diagnostics(self) -> None:
         fixture_dir = Path(__file__).parent / "fixtures" / "diagnostics"
 

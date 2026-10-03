@@ -135,21 +135,33 @@ class PathTraversalDetector(BaseDetector):
         self,
         node: ast.AST,
         scope: ast.FunctionDef | ast.AsyncFunctionDef | ast.Module | None,
+        visited_names: set[str] | None = None,
+        known_constants: dict[str, bool] | None = None,
     ) -> bool:
+        if visited_names is None:
+            visited_names = set()
+        if known_constants is None:
+            known_constants = {}
         """Check if an expression represents an unsafe dynamic path."""
         if FlowAnalyzer.is_constant(node) or self._is_sanitized_path(node):
             return False
 
-        if isinstance(node, ast.Name) and node.id.isupper():
+        if isinstance(node, ast.Name) and (
+            node.id.isupper() or known_constants.get(node.id, False)
+        ):
             return False
+        if isinstance(node, ast.Name):
+            if node.id in visited_names:
+                return True
+            visited_names.add(node.id)
 
         # Dynamic string concatenation or pathlib path construction (e.g., base / filename)
         if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Div)):
             if self._is_sanitized_path(node.left) or self._is_sanitized_path(node.right):
                 return False
-            return self._is_dynamic_path(node.left, scope) or self._is_dynamic_path(
-                node.right, scope
-            )
+            return self._is_dynamic_path(
+                node.left, scope, visited_names, known_constants
+            ) or self._is_dynamic_path(node.right, scope, visited_names, known_constants)
 
         # Dynamic f-string (e.g., f"/base/{filename}")
         if isinstance(node, ast.JoinedStr):
@@ -164,7 +176,7 @@ class PathTraversalDetector(BaseDetector):
                             sub_expr = assigned
                     if self._is_sanitized_path(sub_expr):
                         continue
-                    if self._is_dynamic_path(val.value, scope):
+                    if self._is_dynamic_path(val.value, scope, visited_names, known_constants):
                         return True
             return False
 
@@ -172,7 +184,7 @@ class PathTraversalDetector(BaseDetector):
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mod):
             if self._is_sanitized_path(node.right):
                 return False
-            return self._is_dynamic_path(node.right, scope)
+            return self._is_dynamic_path(node.right, scope, visited_names, known_constants)
 
         # Method/function calls
         if isinstance(node, ast.Call):
@@ -180,7 +192,7 @@ class PathTraversalDetector(BaseDetector):
                 return False
             if isinstance(node.func, ast.Attribute) and node.func.attr == "format":
                 return any(
-                    self._is_dynamic_path(arg, scope)
+                    self._is_dynamic_path(arg, scope, visited_names, known_constants)
                     for arg in node.args
                     if not self._is_sanitized_path(arg)
                 )
@@ -189,7 +201,7 @@ class PathTraversalDetector(BaseDetector):
                 isinstance(node.func, ast.Attribute) and node.func.attr in ("join", "joinpath")
             ) or (isinstance(node.func, ast.Name) and node.func.id == "join"):
                 return any(
-                    self._is_dynamic_path(arg, scope)
+                    self._is_dynamic_path(arg, scope, visited_names, known_constants)
                     for arg in node.args
                     if not self._is_sanitized_path(arg)
                 )
@@ -198,7 +210,7 @@ class PathTraversalDetector(BaseDetector):
                 isinstance(node.func, ast.Attribute) and node.func.attr == "Path"
             ):
                 return any(
-                    self._is_dynamic_path(arg, scope)
+                    self._is_dynamic_path(arg, scope, visited_names, known_constants)
                     for arg in node.args
                     if not self._is_sanitized_path(arg)
                 )
@@ -211,11 +223,11 @@ class PathTraversalDetector(BaseDetector):
                 "expanduser",
             ):
                 return any(
-                    self._is_dynamic_path(arg, scope)
+                    self._is_dynamic_path(arg, scope, visited_names, known_constants)
                     for arg in node.args
                     if not self._is_sanitized_path(arg)
                 )
-            return FlowAnalyzer.is_dynamic(node, scope)
+            return FlowAnalyzer.is_dynamic(node, scope, visited_names)
 
         # Path passed directly from dynamic variable / parameter
         if isinstance(node, ast.Name):
@@ -226,13 +238,14 @@ class PathTraversalDetector(BaseDetector):
                 if assigned is not None:
                     if self._is_sanitized_path(assigned):
                         return False
-                    return self._is_dynamic_path(assigned, scope)
-            return FlowAnalyzer.is_dynamic(node, scope)
+                    return self._is_dynamic_path(assigned, scope, visited_names, known_constants)
+            return FlowAnalyzer.is_dynamic(node, scope, visited_names)
 
         return False
 
     def run(self, tree: ast.Module, file_path: Path, source: str) -> list[Finding]:
         findings: list[Finding] = []
+        known_constants = FlowAnalyzer.resolve_module_constants(tree)
         parent_map = self.build_parent_map(tree)
 
         for node in ast.walk(tree):
@@ -243,7 +256,7 @@ class PathTraversalDetector(BaseDetector):
             func_name, path_arg = self._identify_sink(node)
 
             if func_name and path_arg is not None:
-                if self._is_dynamic_path(path_arg, scope):
+                if self._is_dynamic_path(path_arg, scope, known_constants=known_constants):
                     msg = f"Possible path traversal: dynamic path in `{func_name}()`."
                     hint = FLASK_FIX_HINT if "send_file" in func_name else DEFAULT_FIX_HINT
                     findings.append(
