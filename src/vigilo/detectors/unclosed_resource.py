@@ -31,6 +31,16 @@ class UnclosedResourceDetector(BaseDetector):
                 for item in node.items:
                     if isinstance(item.context_expr, ast.Call):
                         with_open_calls.add(item.context_expr)
+                        # Handle contextlib.closing(open(...))
+                        func_name = ""
+                        if isinstance(item.context_expr.func, ast.Name):
+                            func_name = item.context_expr.func.id
+                        elif isinstance(item.context_expr.func, ast.Attribute) and item.context_expr.func.attr == "closing":
+                            func_name = "closing"
+                        if func_name == "closing" and item.context_expr.args:
+                            first_arg = item.context_expr.args[0]
+                            if isinstance(first_arg, ast.Call):
+                                with_open_calls.add(first_arg)
 
         # Check for open() calls that are not in with_open_calls
         for node in ast.walk(tree):

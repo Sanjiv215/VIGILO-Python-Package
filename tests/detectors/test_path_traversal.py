@@ -114,6 +114,29 @@ def handle_requests(untrusted_path, req, env):
         for f in findings:
             self.assertEqual(f.detector.id, "VIGILO-005")
 
+
+    def test_reproduction_false_positives(self) -> None:
+        code = """
+import contextlib
+from pathlib import Path
+
+SAFE_DIR = "/var/app/uploads"
+
+def read_fixed_file_safe():
+    path = Path(SAFE_DIR) / "readme.txt"
+    with open(path) as f:
+        return f.read()
+
+def resource_managed_safe(path):
+    with contextlib.closing(open(path)) as f:
+        return f.read()
+"""
+        findings = self._scan(code)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0].detector.id, "VIGILO-005")
+        # Ensure it flags resource_managed_safe because `path` is an argument
+        self.assertEqual(findings[0].location.line, 13)
+
     def test_safe_framework_sinks_not_flagged(self) -> None:
         code = """
 import os

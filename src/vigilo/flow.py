@@ -10,6 +10,28 @@ class FlowAnalyzer:
     """Utilities for local scope analysis, constant evaluation, and taint tracking."""
 
     @staticmethod
+    def resolve_module_constants(tree: ast.Module) -> dict[str, bool]:
+        """One-time pre-pass to resolve module-level constants."""
+        known_constants: dict[str, bool] = {}
+        for node in tree.body:
+            if isinstance(node, ast.Assign):
+                if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                    name = node.targets[0].id
+                    if FlowAnalyzer.is_constant(node.value):
+                        known_constants[name] = True
+                    elif isinstance(node.value, ast.Name) and node.value.id in known_constants:
+                        known_constants[name] = True
+                    elif isinstance(node.value, ast.BinOp) and isinstance(node.value.op, (ast.Add, ast.Div)):
+                        if (FlowAnalyzer.is_constant(node.value.left) or (isinstance(node.value.left, ast.Name) and node.value.left.id in known_constants)) and \
+                           (FlowAnalyzer.is_constant(node.value.right) or (isinstance(node.value.right, ast.Name) and node.value.right.id in known_constants)):
+                            known_constants[name] = True
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+                name = node.target.id
+                if node.value and FlowAnalyzer.is_constant(node.value):
+                    known_constants[name] = True
+        return known_constants
+
+    @staticmethod
     def is_constant(node: ast.AST | None) -> bool:
         """Check if an AST expression evaluates to a compile-time constant."""
         if node is None:
